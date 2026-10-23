@@ -1,0 +1,25 @@
+# Person A (@Gip-Coder): AI core
+/src/aws_arch/parser.py     @Gip-Coder
+/src/aws_arch/reasoner.py   @Gip-Coder
+/src/aws_arch/llm.py        @Gip-Coder
+/src/aws_arch/validator.py  @Gip-Coder
+/schemas/                   @Gip-Coder
+/catalogue/                 @Gip-Coder
+/prompts/                   @Gip-Coder
+/eval/                      @Gip-Coder
+
+# Person B (@sudiptamajumder2024-ctrl): rendering / analysis / infra
+/src/aws_arch/diagram.py    @sudiptamajumder2024-ctrl
+/src/aws_arch/cost.py       @sudiptamajumder2024-ctrl
+/src/aws_arch/security.py   @sudiptamajumder2024-ctrl
+/app/                       @sudiptamajumder2024-ctrl
+/scripts/                   @sudiptamajumder2024-ctrl
+/.github/                   @sudiptamajumder2024-ctrl
+/Makefile                   @sudiptamajumder2024-ctrl
+/.env.example               @sudiptamajumder2024-ctrl
+
+# Shared
+/docs/                      @Gip-Coder @sudiptamajumder2024-ctrl
+/README.md                  @Gip-Coder @sudiptamajumder2024-ctrl
+/examples/                  @Gip-Coder @sudiptamajumder2024-ctrl
+/tests/                     @Gip-Coder @sudiptamajumder2024-ctrl
