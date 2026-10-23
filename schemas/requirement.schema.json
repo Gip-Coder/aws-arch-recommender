@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Requirement",
+  "type": "object",
+  "required": ["app_type", "expected_users", "traffic_pattern", "availability", "budget_sensitivity"],
+  "properties": {
+    "app_type": {"type": "string"},
+    "expected_users": {"type": "integer", "minimum": 1},
+    "traffic_pattern": {"enum": ["steady", "spiky", "unknown"]},
+    "availability": {"enum": ["low", "standard", "high"]},
+    "storage": {"type": "array", "items": {"enum": ["relational", "key-value", "object", "analytics"]}},
+    "performance": {"enum": ["relaxed", "standard", "low-latency"]},
+    "security_compliance": {"type": "array", "items": {"type": "string"}},
+    "budget_sensitivity": {"enum": ["minimise", "moderate", "not-primary"]},
+    "assumptions": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

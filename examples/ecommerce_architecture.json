@@ -1,0 +1,16 @@
+{
+  "pattern": "three_tier_web",
+  "services": [
+    {"id": "cdn", "type": "CloudFront", "role": "content delivery", "rationale": "Low-latency delivery and HTTPS for a large user base."},
+    {"id": "alb", "type": "ApplicationLoadBalancer", "role": "traffic distribution", "rationale": "Spreads traffic across AZs for high availability."},
+    {"id": "app", "type": "EC2AutoScalingGroup", "role": "application tier", "rationale": "Scales with steady-but-growing load."},
+    {"id": "db", "type": "RDS_MultiAZ", "role": "relational data store", "rationale": "Relational data plus automatic failover for high availability."}
+  ],
+  "connections": [
+    {"from": "cdn", "to": "alb"},
+    {"from": "alb", "to": "app"},
+    {"from": "app", "to": "db"}
+  ],
+  "security_controls": ["IAM least-privilege roles", "encryption at rest", "encryption in transit (TLS)"],
+  "assumptions": ["traffic roughly steady, not highly spiky"]
+}

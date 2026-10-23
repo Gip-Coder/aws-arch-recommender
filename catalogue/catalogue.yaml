@@ -1,0 +1,23 @@
+# Curated service allow-list (starter set). Costs are PLACEHOLDERS (USD/month, low-high at
+# ~100k MAU scale) -- replace with figures checked on official AWS pricing pages and note the date.
+version: 0.1
+region: ap-south-1
+prices_checked_on: "TODO"
+services:
+  CloudFront:            {category: network,   allowed_targets: [ApplicationLoadBalancer, S3, APIGateway], cost: [5, 40]}
+  Route53:               {category: network,   allowed_targets: [CloudFront, ApplicationLoadBalancer],     cost: [1, 5]}
+  ApplicationLoadBalancer: {category: network, allowed_targets: [EC2AutoScalingGroup, ECSFargate],        cost: [20, 40]}
+  APIGateway:            {category: network,   allowed_targets: [Lambda, Cognito],                         cost: [1, 20]}
+  EC2AutoScalingGroup:   {category: compute,   allowed_targets: [RDS, RDS_MultiAZ, DynamoDB, S3, ElastiCache], cost: [60, 150]}
+  ECSFargate:            {category: compute,   allowed_targets: [RDS, RDS_MultiAZ, DynamoDB, S3],          cost: [40, 120]}
+  Lambda:                {category: compute,   allowed_targets: [DynamoDB, S3, RDS, SQS, Bedrock],         cost: [0, 15]}
+  RDS:                   {category: database,  allowed_targets: [],                                         cost: [30, 60]}
+  RDS_MultiAZ:           {category: database,  allowed_targets: [],                                         cost: [60, 120]}
+  DynamoDB:              {category: database,  allowed_targets: [],                                         cost: [1, 25]}
+  ElastiCache:           {category: database,  allowed_targets: [],                                         cost: [15, 50]}
+  S3:                    {category: storage,   allowed_targets: [],                                         cost: [1, 10]}
+  SQS:                   {category: integration, allowed_targets: [Lambda],                                 cost: [0, 2]}
+  Cognito:               {category: security,  allowed_targets: [],                                         cost: [0, 10]}
+  Bedrock:               {category: ai,        allowed_targets: [],                                         cost: [5, 16]}
+  CloudWatch:            {category: ops,       allowed_targets: [],                                         cost: [2, 10]}
+  IAM:                   {category: security,  allowed_targets: [],                                         cost: [0, 0]}

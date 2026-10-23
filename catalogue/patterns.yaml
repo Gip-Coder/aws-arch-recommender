@@ -1,0 +1,14 @@
+# Named reference patterns the reasoning engine selects from.
+patterns:
+  three_tier_web:
+    when: "relational data, steady traffic, standard or high availability"
+    services: [CloudFront, ApplicationLoadBalancer, EC2AutoScalingGroup, RDS_MultiAZ]
+  serverless_rest_api:
+    when: "spiky/unknown traffic, minimise cost, key-value data"
+    services: [APIGateway, Lambda, DynamoDB, Cognito]
+  static_site_cdn:
+    when: "static content only"
+    services: [CloudFront, S3]
+  batch_pipeline:
+    when: "asynchronous processing / data pipeline"
+    services: [S3, SQS, Lambda, DynamoDB]
