@@ -22,8 +22,11 @@ pytest                        # unit tests
 python run.py "Highly available e-commerce site for ~100k users"   # needs Bedrock access
 ```
 For live mode set a real Bedrock model id in `src/aws_arch/llm.py` and configure AWS credentials
-(`aws configure`) -- never commit credentials. PNG diagrams need Graphviz (`dot`) installed;
-otherwise a `.dot` file is written.
+(`aws configure`) -- never commit credentials. Architecture diagrams are rendered using the Python `diagrams`
+library with official AWS node classes (`diagrams.aws.*`) grouped into clusters by service category.
+PNG diagrams require Graphviz (`dot`) on PATH; on Windows install via `winget install Graphviz.Graphviz` or
+`choco install graphviz` and ensure the bin folder (`C:\Program Files\Graphviz\bin` or `C:\Program Files (x86)\Graphviz\bin`)
+is added to PATH. If `dot` is missing, a fallback Graphviz `.dot` file is written with guidance to stderr.
 
 ## Layout
 | Path | Purpose |
