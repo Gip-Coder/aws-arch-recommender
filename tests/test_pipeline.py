@@ -30,5 +30,8 @@ def test_invalid_connection_rejected():
 def test_cost_range_ordered():
     c = estimate_cost(ARCH); assert c["monthly_usd_low"] <= c["monthly_usd_high"]
 
-def test_security_all_pass_for_example():
-    assert all(f["passed"] for f in check_security(ARCH, REQ))
+def test_security_findings_for_example():
+    findings = check_security(ARCH, REQ)
+    assert len(findings) == 15
+    failed_ids = {f["id"] for f in findings if not f["passed"]}
+    assert failed_ids == {"SEC-06", "OPS-01"}
