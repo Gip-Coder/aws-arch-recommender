@@ -28,7 +28,11 @@ def test_invalid_connection_rejected():
     assert any("not an allowed connection" in e for e in validate_architecture(bad))
 
 def test_cost_range_ordered():
-    c = estimate_cost(ARCH); assert c["monthly_usd_low"] <= c["monthly_usd_high"]
+    c = estimate_cost(ARCH)
+    if c["monthly_usd_low"] is not None and c["monthly_usd_high"] is not None:
+        assert c["monthly_usd_low"] <= c["monthly_usd_high"]
+    else:
+        assert c["status"] == "incomplete"
 
 def test_security_all_pass_for_example():
     assert all(f["passed"] for f in check_security(ARCH, REQ))

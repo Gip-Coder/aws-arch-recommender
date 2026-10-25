@@ -1,23 +1,279 @@
-# Curated service allow-list (starter set). Costs are PLACEHOLDERS (USD/month, low-high at
-# ~100k MAU scale) -- replace with figures checked on official AWS pricing pages and note the date.
+# Curated service allow-list and pricing model.
+# Region: ap-south-1 (Asia Pacific - Mumbai)
+# Pricing: unit prices, usage assumptions, and official source URLs.
+# Unverified prices are explicitly set to null with TODO status.
 version: 0.1
 region: ap-south-1
 prices_checked_on: "TODO"
 services:
-  CloudFront:            {category: network,   allowed_targets: [ApplicationLoadBalancer, S3, APIGateway], cost: [5, 40]}
-  Route53:               {category: network,   allowed_targets: [CloudFront, ApplicationLoadBalancer],     cost: [1, 5]}
-  ApplicationLoadBalancer: {category: network, allowed_targets: [EC2AutoScalingGroup, ECSFargate],        cost: [20, 40]}
-  APIGateway:            {category: network,   allowed_targets: [Lambda, Cognito],                         cost: [1, 20]}
-  EC2AutoScalingGroup:   {category: compute,   allowed_targets: [RDS, RDS_MultiAZ, DynamoDB, S3, ElastiCache], cost: [60, 150]}
-  ECSFargate:            {category: compute,   allowed_targets: [RDS, RDS_MultiAZ, DynamoDB, S3],          cost: [40, 120]}
-  Lambda:                {category: compute,   allowed_targets: [DynamoDB, S3, RDS, SQS, Bedrock],         cost: [0, 15]}
-  RDS:                   {category: database,  allowed_targets: [],                                         cost: [30, 60]}
-  RDS_MultiAZ:           {category: database,  allowed_targets: [],                                         cost: [60, 120]}
-  DynamoDB:              {category: database,  allowed_targets: [],                                         cost: [1, 25]}
-  ElastiCache:           {category: database,  allowed_targets: [],                                         cost: [15, 50]}
-  S3:                    {category: storage,   allowed_targets: [],                                         cost: [1, 10]}
-  SQS:                   {category: integration, allowed_targets: [Lambda],                                 cost: [0, 2]}
-  Cognito:               {category: security,  allowed_targets: [],                                         cost: [0, 10]}
-  Bedrock:               {category: ai,        allowed_targets: [],                                         cost: [5, 16]}
-  CloudWatch:            {category: ops,       allowed_targets: [],                                         cost: [2, 10]}
-  IAM:                   {category: security,  allowed_targets: [],                                         cost: [0, 0]}
+  CloudFront:
+    category: network
+    allowed_targets: [ApplicationLoadBalancer, S3, APIGateway]
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per GB data transfer out"
+      currency: "USD"
+      region_scope: "global"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/cloudfront/pricing/"
+      usage_assumptions:
+        low_quantity: 100
+        high_quantity: 1000
+        unit: "GB"
+        description: "100 GB transfer (low) to 1,000 GB transfer (high)"
+
+  Route53:
+    category: network
+    allowed_targets: [CloudFront, ApplicationLoadBalancer]
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per hosted zone / million queries"
+      currency: "USD"
+      region_scope: "global"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/route53/pricing/"
+      usage_assumptions:
+        low_quantity: 1
+        high_quantity: 5
+        unit: "hosted zones and query millions"
+        description: "1 hosted zone, 1M queries (low) to 1 hosted zone, 5M queries (high)"
+
+  ApplicationLoadBalancer:
+    category: network
+    allowed_targets: [EC2AutoScalingGroup, ECSFargate]
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per ALB-hour / LCU-hour"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/elasticloadbalancing/pricing/"
+      usage_assumptions:
+        low_quantity: 730
+        high_quantity: 1460
+        unit: "hours (plus LCUs)"
+        description: "730 hours, 1 LCU (low) to 730 hours, 3 LCUs (high)"
+
+  APIGateway:
+    category: network
+    allowed_targets: [Lambda, Cognito]
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per million requests"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/api-gateway/pricing/"
+      usage_assumptions:
+        low_quantity: 1
+        high_quantity: 10
+        unit: "million requests"
+        description: "1M requests (low) to 10M requests (high)"
+
+  EC2AutoScalingGroup:
+    category: compute
+    allowed_targets: [RDS, RDS_MultiAZ, DynamoDB, S3, ElastiCache]
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per instance-hour"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/ec2/pricing/on-demand/"
+      usage_assumptions:
+        low_quantity: 730
+        high_quantity: 1460
+        unit: "instance-hours"
+        description: "730 hours, 1 instance (low) to 1460 hours, 2 instances (high) (e.g. t3.micro/small)"
+
+  ECSFargate:
+    category: compute
+    allowed_targets: [RDS, RDS_MultiAZ, DynamoDB, S3]
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per vCPU-hour and GB-hour"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/fargate/pricing/"
+      usage_assumptions:
+        low_quantity: 730
+        high_quantity: 1460
+        unit: "task-hours"
+        description: "0.5 vCPU, 1 GB RAM, 1 task 730h (low) to 2 tasks 730h (high)"
+
+  Lambda:
+    category: compute
+    allowed_targets: [DynamoDB, S3, RDS, SQS, Bedrock]
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per million requests and GB-second"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/lambda/pricing/"
+      usage_assumptions:
+        low_quantity: 1
+        high_quantity: 10
+        unit: "million requests"
+        description: "1M invocations @ 128MB/100ms (low) to 10M invocations (high)"
+
+  RDS:
+    category: database
+    allowed_targets: []
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per DB instance-hour and GB-month storage"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/rds/mysql/pricing/"
+      usage_assumptions:
+        low_quantity: 730
+        high_quantity: 730
+        unit: "hours and 20-50 GB gp3"
+        description: "Single-AZ db.t3.micro 730h, 20 GB gp3 storage"
+
+  RDS_MultiAZ:
+    category: database
+    allowed_targets: []
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per Multi-AZ instance-hour and GB-month storage"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/rds/mysql/pricing/"
+      usage_assumptions:
+        low_quantity: 730
+        high_quantity: 730
+        unit: "hours and 20-50 GB gp3"
+        description: "Multi-AZ db.t3.micro 730h, 20 GB gp3 storage"
+
+  DynamoDB:
+    category: database
+    allowed_targets: []
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per million read/write request units and GB-month"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/dynamodb/pricing/"
+      usage_assumptions:
+        low_quantity: 1
+        high_quantity: 5
+        unit: "million RRU/WRU and 5-20 GB"
+        description: "On-Demand: 1M reads/writes, 5 GB (low) to 5M reads/writes, 20 GB (high)"
+
+  ElastiCache:
+    category: database
+    allowed_targets: []
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per node-hour"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/elasticache/pricing/"
+      usage_assumptions:
+        low_quantity: 730
+        high_quantity: 1460
+        unit: "node-hours"
+        description: "cache.t3.micro, 1 node 730h (low) to 2 nodes 730h (high)"
+
+  S3:
+    category: storage
+    allowed_targets: []
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per GB-month and request tiers"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/s3/pricing/"
+      usage_assumptions:
+        low_quantity: 10
+        high_quantity: 100
+        unit: "GB-months"
+        description: "Standard: 10 GB, 10k PUTs, 100k GETs (low) to 100 GB, 100k PUTs, 1M GETs (high)"
+
+  SQS:
+    category: integration
+    allowed_targets: [Lambda]
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per million requests"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/sqs/pricing/"
+      usage_assumptions:
+        low_quantity: 1
+        high_quantity: 10
+        unit: "million requests"
+        description: "Standard queue: 1M requests (low) to 10M requests (high)"
+
+  Cognito:
+    category: security
+    allowed_targets: []
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per monthly active user (MAU)"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/cognito/pricing/"
+      usage_assumptions:
+        low_quantity: 1000
+        high_quantity: 25000
+        unit: "MAUs"
+        description: "User Pools: 1,000 MAUs (low) to 25,000 MAUs (high)"
+
+  Bedrock:
+    category: ai
+    allowed_targets: []
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per 1,000 input/output tokens"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/bedrock/pricing/"
+      usage_assumptions:
+        low_quantity: 100
+        high_quantity: 1000
+        unit: "thousand tokens"
+        description: "100k in / 50k out tokens (low) to 1M in / 500k out tokens (high)"
+
+  CloudWatch:
+    category: ops
+    allowed_targets: []
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per GB ingested, custom metrics, alarms"
+      currency: "USD"
+      region_scope: "ap-south-1"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/cloudwatch/pricing/"
+      usage_assumptions:
+        low_quantity: 5
+        high_quantity: 20
+        unit: "GB log ingestion"
+        description: "5 GB logs, 3 metrics, 2 alarms (low) to 20 GB logs, 10 metrics, 5 alarms (high)"
+
+  IAM:
+    category: security
+    allowed_targets: []
+    pricing:
+      unit_price: null # TODO verify
+      unit: "USD per user/role"
+      currency: "USD"
+      region_scope: "global"
+      status: "TODO verify"
+      source_url: "https://aws.amazon.com/iam/"
+      usage_assumptions:
+        low_quantity: 1
+        high_quantity: 1
+        unit: "account"
+        description: "Core IAM permissions and roles"
