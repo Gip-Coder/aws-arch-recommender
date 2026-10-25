@@ -1,4 +1,5 @@
 """Unit tests for aws_arch.cost estimation engine."""
+import json
 import sys
 from pathlib import Path
 
@@ -61,11 +62,36 @@ FAKE_PRICING_CATALOGUE = {
                 "unit_price": 0.0,
                 "unit": "USD per user/role",
                 "status": "verified",
-                "source_url": "https://aws.amazon.com/iam/",
+                "source_url": "https://aws.amazon.com/iam/pricing/",
                 "usage_assumptions": {
                     "low_quantity": 1,
                     "high_quantity": 1,
                     "description": "Included with account at no additional charge",
+                },
+            }
+        },
+        "MultiCompService": {
+            "pricing": {
+                "unit_price": 0.05,
+                "unit": "USD per unit",
+                "status": "verified",
+                "source_url": "https://aws.amazon.com/custom/",
+                "components": [
+                    {
+                        "name": "Component A",
+                        "unit_price": 0.02,
+                        "low_quantity": 100,
+                        "high_quantity": 200,
+                    },
+                    {
+                        "name": "Component B",
+                        "unit_price": 0.10,
+                        "low_quantity": 10,
+                        "high_quantity": 50,
+                    },
+                ],
+                "usage_assumptions": {
+                    "description": "Comp A: 100-200, Comp B: 10-50",
                 },
             }
         },
@@ -132,6 +158,22 @@ def test_tiered_unit_price_arithmetic():
     assert res["monthly_usd_high"] == 120.00
 
 
+def test_multi_component_pricing_arithmetic():
+    """Verify multi-component service summation."""
+    arch = {"services": [{"id": "mc", "type": "MultiCompService", "role": "test"}]}
+    res = estimate_cost(arch, catalogue=FAKE_PRICING_CATALOGUE)
+
+    assert res["status"] == "complete"
+    # Comp A: 100 * 0.02 = 2.00 (low), 200 * 0.02 = 4.00 (high)
+    # Comp B: 10 * 0.10 = 1.00 (low), 50 * 0.10 = 5.00 (high)
+    # Low total: 2.00 + 1.00 = 3.00; High total: 4.00 + 5.00 = 9.00
+    b = res["breakdown"]["mc"]
+    assert b["monthly_usd_low"] == 3.00
+    assert b["monthly_usd_high"] == 9.00
+    assert res["monthly_usd_low"] == 3.00
+    assert res["monthly_usd_high"] == 9.00
+
+
 # ==============================================================================
 # Category B: Unknown and incomplete pricing
 # ==============================================================================
@@ -171,6 +213,22 @@ def test_partially_verified_architecture():
     # Partial verified subtotal is reported separately without pretending to be full cost
     assert res["partial_verified_monthly_usd_low"] == 8.47
     assert res["partial_verified_monthly_usd_high"] == 16.94
+
+
+def test_entirely_unverified_architecture_returns_null_totals():
+    """An architecture with only unverified services returns None for all totals."""
+    arch = {
+        "services": [
+            {"id": "db1", "type": "UnverifiedDB", "role": "db1"},
+            {"id": "db2", "type": "UnverifiedDB", "role": "db2"},
+        ]
+    }
+    res = estimate_cost(arch, catalogue=FAKE_PRICING_CATALOGUE)
+
+    assert res["status"] == "incomplete"
+    assert res["monthly_usd_low"] is None
+    assert res["monthly_usd_high"] is None
+    assert "partial_verified_monthly_usd_low" not in res
 
 
 def test_verified_zero_cost_distinguished_from_unverified():
@@ -225,8 +283,17 @@ def test_malformed_and_missing_data_handled_safely():
     assert res["breakdown"]["unknown_comp"]["status"] == "incomplete"
 
 
+def test_json_serialization_safety():
+    """Verify estimate_cost output is strictly JSON serializable without NaN or sentinels."""
+    res = estimate_cost(ARCH_EXAMPLE)
+    dumped = json.dumps(res)
+    loaded = json.loads(dumped)
+    assert loaded["region"] == "ap-south-1"
+    assert "NaN" not in dumped
+
+
 # ==============================================================================
-# Category D: Backwards compatibility & Catalogue verification
+# Category D: Backwards compatibility & Real Catalogue verification
 # ==============================================================================
 def test_existing_output_keys_preserved():
     """Ensure all original keys are preserved for backward compatibility."""
@@ -249,21 +316,35 @@ def test_existing_output_keys_preserved():
     assert "Order-of-magnitude estimate" in res["note"]
 
 
-def test_catalogue_yaml_every_service_has_source_url_and_status():
-    """Verify that every service in catalogue.yaml has a valid source_url and explicit status."""
+def test_catalogue_yaml_all_services_verified_with_official_sources():
+    """Verify that every service in catalogue.yaml has verified status and valid AWS source."""
     cat = load_catalogue()
     assert cat["region"] == "ap-south-1"
+    assert cat["prices_checked_on"] == "2026-10-25"
     services = cat.get("services", {})
     assert len(services) == 17
 
     for name, data in services.items():
         assert "pricing" in data, f"{name} is missing pricing block"
         pricing = data["pricing"]
-        assert "source_url" in pricing and pricing["source_url"].startswith("https://"), (
-            f"{name} must have an official https source_url"
+        assert "source_url" in pricing and pricing["source_url"].startswith("https://aws.amazon.com/"), (
+            f"{name} must have an official AWS source_url"
         )
-        assert pricing.get("status") in {"TODO verify", "verified"}, (
-            f"{name} has invalid status {pricing.get('status')}"
+        assert pricing.get("status") == "verified", f"{name} is not verified"
+        assert pricing.get("unit_price") is not None, f"{name} verified price must not be null"
+        assert "usage_assumptions" in pricing, f"{name} is missing usage_assumptions"
+
+
+def test_all_17_catalogue_services_estimate_valid_and_ordered():
+    """Verify that estimating cost for each individual service yields valid low <= high."""
+    cat = load_catalogue()
+    for name in cat.get("services", {}):
+        single_arch = {"services": [{"id": "s1", "type": name, "role": "test"}]}
+        res = estimate_cost(single_arch, catalogue=cat)
+        assert res["status"] == "complete", f"{name} should be complete"
+        assert res["monthly_usd_low"] is not None, f"{name} low cost is None"
+        assert res["monthly_usd_high"] is not None, f"{name} high cost is None"
+        assert res["monthly_usd_low"] >= 0.0, f"{name} low cost is negative"
+        assert res["monthly_usd_low"] <= res["monthly_usd_high"], (
+            f"{name} monthly_usd_low ({res['monthly_usd_low']}) > monthly_usd_high ({res['monthly_usd_high']})"
         )
-        if pricing["status"] == "TODO verify":
-            assert pricing["unit_price"] is None, f"{name} unverified price must be null"

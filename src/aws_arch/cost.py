@@ -31,10 +31,11 @@ def estimate_cost(arch: dict, catalogue: dict | None = None) -> dict[str, Any]:
         status = pricing.get("status", "TODO verify")
         source_url = pricing.get("source_url")
         usage_assumptions = pricing.get("usage_assumptions", {})
+        components = pricing.get("components")
 
         # Legacy fallback if catalogue has cost: [low, high]
         legacy_cost = svc_meta.get("cost")
-        if unit_price is None and legacy_cost and isinstance(legacy_cost, list) and len(legacy_cost) == 2:
+        if unit_price is None and not components and legacy_cost and isinstance(legacy_cost, list) and len(legacy_cost) == 2:
             if legacy_cost[0] is not None and legacy_cost[1] is not None:
                 low_cost = float(legacy_cost[0])
                 high_cost = float(legacy_cost[1])
@@ -60,7 +61,58 @@ def estimate_cost(arch: dict, catalogue: dict | None = None) -> dict[str, Any]:
         )
         assumptions[sid] = desc
 
-        # Handle unverified / unknown / null pricing
+        # Multi-component pricing model
+        if components and isinstance(components, list):
+            comp_low = 0.0
+            comp_high = 0.0
+            all_comp_verified = (status == "verified")
+            for comp in components:
+                c_price = comp.get("unit_price")
+                c_status = comp.get("status", status)
+                if c_price is None or c_status != "verified":
+                    all_comp_verified = False
+                    break
+                c_low_qty = float(comp.get("low_quantity", 1.0))
+                c_high_qty = float(comp.get("high_quantity", 1.0))
+                comp_low += float(c_price) * c_low_qty
+                comp_high += float(c_price) * c_high_qty
+
+            if not all_comp_verified:
+                incomplete_services.append(stype)
+                breakdown[sid] = {
+                    "service": stype,
+                    "status": "incomplete",
+                    "unit_price": unit_price,
+                    "unit": unit,
+                    "monthly_usd_low": None,
+                    "monthly_usd_high": None,
+                    "usage_assumption": desc,
+                    "source_url": source_url,
+                    "components": components,
+                    "note": "Pricing unverified (TODO verify)",
+                }
+                continue
+
+            low_cost = round(comp_low, 2)
+            high_cost = round(comp_high, 2)
+            has_verified_cost = True
+            total_low += low_cost
+            total_high += high_cost
+
+            breakdown[sid] = {
+                "service": stype,
+                "status": "verified",
+                "unit_price": unit_price,
+                "unit": unit,
+                "monthly_usd_low": low_cost,
+                "monthly_usd_high": high_cost,
+                "usage_assumption": desc,
+                "source_url": source_url,
+                "components": components,
+            }
+            continue
+
+        # Single-dimension pricing model
         if unit_price is None or status != "verified":
             incomplete_services.append(stype)
             breakdown[sid] = {
@@ -76,7 +128,6 @@ def estimate_cost(arch: dict, catalogue: dict | None = None) -> dict[str, Any]:
             }
             continue
 
-        # Verified numeric price (including verified 0.0)
         low_qty = (
             float(usage_assumptions.get("low_quantity", 1))
             if isinstance(usage_assumptions, dict)
