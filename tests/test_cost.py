@@ -694,3 +694,53 @@ def test_fifo_queue_pricing_model():
     assert res["status"] == "complete"
     # 2M requests @ $0.50/M = $1.00
     assert res["breakdown"]["qf"]["monthly_usd_low"] == 1.00
+
+
+def test_route53_hosted_zone_and_queries_calculated_correctly():
+    """Route 53 models both hosted zones ($0.50/mo) and DNS query volume ($0.40/M)."""
+    arch = {"services": [{"id": "dns", "type": "Route53"}]}
+    res = estimate_cost(arch)
+    assert res["status"] == "complete"
+    assert res["monthly_usd_low"] == 0.90
+    assert res["monthly_usd_high"] == 4.50
+
+    comp = res["breakdown"]["dns"]["components"]
+    assert len(comp) == 2
+    assert comp[0]["name"] == "Hosted Zone (first 25)"
+    assert comp[0]["unit_price"] == 0.50
+    assert comp[1]["name"] == "Standard DNS Queries"
+    assert comp[1]["unit_price"] == 0.0000004
+
+
+def test_route53_not_added_to_unrelated_architecture():
+    """Architectures lacking Route 53 do not incur or display Route 53 hosted-zone charges."""
+    arch = {
+        "services": [
+            {"id": "app", "type": "EC2AutoScalingGroup"},
+            {"id": "alb", "type": "ApplicationLoadBalancer"},
+        ]
+    }
+    res = estimate_cost(arch)
+    assert res["status"] == "complete"
+    services_in_breakdown = [item["service"] for item in res["breakdown"].values()]
+    assert "Route53" not in services_in_breakdown
+    assert "dns" not in res["breakdown"]
+    # Total equals exactly app ($8.18 / $16.35) + alb ($23.29 / $34.97) = $31.47 / $51.32
+    assert res["monthly_usd_low"] == 31.47
+    assert res["monthly_usd_high"] == 51.32
+
+
+def test_fargate_rates_and_assumptions():
+    """Fargate pricing uses verified ap-south-1 rates ($0.04256/vCPU-hr, $0.004655/GB-hr)."""
+    arch = {"services": [{"id": "fgt", "type": "ECSFargate"}]}
+    res = estimate_cost(arch)
+    assert res["status"] == "complete"
+    comp = res["breakdown"]["fgt"]["components"]
+    assert comp[0]["name"] == "Fargate vCPU"
+    assert comp[0]["unit_price"] == 0.04256
+    assert comp[1]["name"] == "Fargate Memory"
+    assert comp[1]["unit_price"] == 0.004655
+    # Low: (365 * 0.04256) + (730 * 0.004655) = 15.5344 + 3.39815 = 18.93255 -> 18.93
+    assert res["monthly_usd_low"] == 18.93
+    # High: (1460 * 0.04256) + (2920 * 0.004655) = 62.1376 + 13.5926 = 75.7302 -> 75.73
+    assert res["monthly_usd_high"] == 75.73

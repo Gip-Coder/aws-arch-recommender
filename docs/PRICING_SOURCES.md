@@ -35,6 +35,9 @@ This document records the pricing model, authoritative AWS sources, verification
    - **Low Estimate:** Baseline production usage (minimum redundancy, baseline storage, light traffic).
    - **High Estimate:** Scaled production usage (multi-instance/multi-task scaling, higher storage retention, elevated request volume).
    - Standard monthly duration is modelled using 730 hours per month as an explicitly documented operational approximation.
+9. **Separation of Standard Rates from Promotional Free-Tier Allowances:**
+   - Per official AWS guidance ([Finding prices in service price list files](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/finding-prices-in-service-price-list-files.html)), bulk Price List API files provide authoritative On-Demand and Savings Plan rates but are not an exhaustive catalog of promotional allowances.
+   - We verify standard On-Demand unit prices against regional Price List API records, while Free Tier terms (AWS Always Free vs 12-Month introductory offers) are independently verified from official AWS Free Tier service documentation and published pricing schedules.
 
 ---
 
@@ -62,10 +65,13 @@ This document records the pricing model, authoritative AWS sources, verification
   - Hosted Zone: **$0.50 per hosted zone / month** (first 25 zones)
   - Standard DNS Queries: **$0.40 per 1,000,000 queries** ($0.0000004 per query)
   - Queries to Alias records: **$0.00** (Free of charge)
-- **Usage Assumptions:**
+- **Usage Assumptions & Engine Modeling:**
+  - *Modeled Scope:* Both hosted zones ($0.50/zone-month) and standard DNS queries ($0.40/M) are actively modeled in `catalogue/catalogue.yaml` and computed by `src/aws_arch/cost.py`.
   - *Low:* 1 hosted zone + 1,000,000 standard queries = $0.50 + $0.40 = **$0.90/mo**
   - *High:* 1 hosted zone + 10,000,000 standard queries = $0.50 + $4.00 = **$4.50/mo**
-- **Important Conditions & Exclusions:** Traffic Flow policies ($50/mo) and DNS Firewall endpoints are excluded.
+- **Architectural Scope & Exclusions:**
+  - *Architectural Scope:* Route 53 charges are calculated **only** when the architecture contains a `Route53` node. General web or compute architectures omitting Route 53 are never charged for Route 53.
+  - *Exclusions:* Optional Route 53 add-ons such as Traffic Flow routing policies ($50.00/policy-month), Route 53 Resolver endpoints ($0.125/hr per ENI), DNSSEC signing, and domain name registration fees ($12.00–$50.00+/year) are excluded from the core service model.
 
 ### 3. Application Load Balancer (ALB)
 - **Catalogue Key:** `ApplicationLoadBalancer`
@@ -121,14 +127,16 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Price List API Verification & SKUs:**
   - Fargate vCPU Rate: `APS3-Fargate-vCPU-Hours:perCPU` (**$0.0425600000 per vCPU-hour**)
   - Fargate Memory Rate: `APS3-Fargate-GB-Hours` (**$0.0046550000 per GB-hour**)
+  - Ephemeral Storage Rate: `APS3-Fargate-EphemeralStorage-GB-Hours` ($0.0001110000 per GB-hour after first 20 GB)
 - **Billing Dimensions & Unit Rates:**
-  - vCPU: **$0.04256 per vCPU-hour** (Linux/x86)
-  - Memory: **$0.004655 per GB-hour**
-  - Ephemeral Storage: First 20 GB included free per task
+  - vCPU: **$0.04256 per vCPU-hour** (Linux/x86 On-Demand in `ap-south-1`)
+  - Memory: **$0.004655 per GB-hour** (Linux/x86 On-Demand in `ap-south-1`)
+  - Ephemeral Storage: First 20 GB included free per task; $0.000111/GB-hour thereafter
+  - *Regional Rate Distinction:* Note that $0.04656/vCPU-hr and $0.00511/GB-hr apply to `us-west-1` (N. California) and `sa-east-1` (Sao Paulo). The correct verified rates for Asia Pacific (Mumbai) (`ap-south-1`) are strictly $0.04256/vCPU-hr and $0.004655/GB-hr.
 - **Usage Assumptions (730 hours/month):**
   - *Low:* 1 task (0.5 vCPU, 1 GB RAM, 730h) = (365 × $0.04256) + (730 × $0.004655) = $15.53 + $3.40 = **$18.93/mo**
   - *High:* 2 tasks (1.0 vCPU, 2 GB RAM, 730h each = 1,460 task-hours) = (1,460 × $0.04256) + (2,920 × $0.004655) = $62.14 + $13.59 = **$75.73/mo**
-- **Important Conditions & Exclusions:** Additional ephemeral storage beyond 20 GB is excluded.
+- **Important Conditions & Exclusions:** Additional ephemeral storage beyond 20 GB and Windows container OS licenses are excluded.
 
 ### 7. AWS Lambda
 - **Catalogue Key:** `Lambda`
