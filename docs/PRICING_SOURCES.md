@@ -72,6 +72,9 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Official Source:** [Elastic Load Balancing Pricing](https://aws.amazon.com/elasticloadbalancing/pricing/) / AWS Price List API (`AWSELB`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - ALB Instance Hours SKU `WJ2MHASNP2ZNKFXX`: `APS3-LoadBalancerUsage` (**$0.0239000000 per ALB-hour**)
+  - LCU Capacity Units SKU `HFFD75W4GFXQPHZR`: `APS3-LCUUsage` (**$0.0080000000 per LCU-hour**)
 - **Billing Dimensions & Unit Rates:**
   - ALB Instance Hours: **$0.0239 per ALB-hour**
   - Load Balancer Capacity Units (LCU): **$0.008 per LCU-hour**
@@ -94,25 +97,30 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Usage Assumptions:**
   - *Low:* 5,000,000 HTTP API requests = 5 × $1.05 = **$5.25/mo**
   - *High:* 25,000,000 HTTP API requests = 25 × $1.05 = **$26.25/mo**
-- **Important Conditions & Exclusions:** API Gateway dedicated caching and REST API private endpoints are excluded.
+- **Important Conditions & Exclusions:** Payload units are metered in 512 KB increments. Dedicated API Gateway caching and REST API private endpoints are excluded.
 
 ### 5. EC2 Auto Scaling Group
 - **Catalogue Key:** `EC2AutoScalingGroup`
 - **Official Source:** [Amazon EC2 On-Demand Pricing](https://aws.amazon.com/ec2/pricing/on-demand/) / AWS Price List API (`AmazonEC2`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - `t3.micro` Linux Shared SKU `9NX7BP9ZGC9GB8AX`: `APS3-BoxUsage:t3.micro` (**$0.0112000000 per instance-hour**)
 - **Billing Dimensions & Unit Rates:**
   - Instance Type: `t3.micro` Linux / Shared Tenancy: **$0.0112 per instance-hour**
 - **Usage Assumptions (730 hours/month):**
   - *Low:* 1 instance continuous = 730 hours × $0.0112 = **$8.18/mo**
   - *High:* 2 instances continuous (auto-scaled) = 1,460 hours × $0.0112 = **$16.35/mo**
-- **Important Conditions & Exclusions:** Attached EBS root volumes (gp3 @ $0.096/GB-mo) and cross-AZ traffic are billed separately.
+- **Important Conditions & Exclusions:** Attached EBS root volumes (gp3 @ $0.096/GB-mo) and cross-AZ traffic are billed separately. 12-Month Free Tier (750h/mo) is not modeled for production estimates.
 
 ### 6. Amazon ECS on AWS Fargate
 - **Catalogue Key:** `ECSFargate`
 - **Official Source:** [AWS Fargate Pricing](https://aws.amazon.com/fargate/pricing/) / AWS Price List API (`AmazonEC2`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - Fargate vCPU Rate: `APS3-Fargate-vCPU-Hours:perCPU` (**$0.0425600000 per vCPU-hour**)
+  - Fargate Memory Rate: `APS3-Fargate-GB-Hours` (**$0.0046550000 per GB-hour**)
 - **Billing Dimensions & Unit Rates:**
   - vCPU: **$0.04256 per vCPU-hour** (Linux/x86)
   - Memory: **$0.004655 per GB-hour**
@@ -127,6 +135,11 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Official Source:** [AWS Lambda Pricing](https://aws.amazon.com/lambda/pricing/) / AWS Price List API (`AWSLambda`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - Invocations SKU `VPGUBFQ4KNZKMKGJ`: `APS3-Request` (**$0.0000002000 per request** = $0.20 per million requests)
+  - Free Tier Requests SKU `ZQVCC2M69R4S79XS`: `Global-Request` (First 1,000,000 requests free per month)
+  - Compute Duration SKU `PHDF9YNAFR3HDSR8`: `APS3-Lambda-GB-Second` (**$0.0000166667 per GB-second**, Tier 1)
+  - Free Tier Duration SKU `4VCGJ7EG8PJVZG7S`: `Global-Lambda-GB-Second` (First 400,000 GB-seconds free per month)
 - **Billing Dimensions & Unit Rates:**
   - Requests: **$0.20 per million requests** ($0.0000002 per request)
   - Compute: **$0.0000166667 per GB-second** (x86 architecture)
@@ -140,6 +153,9 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Official Source:** [Amazon RDS for MySQL Pricing](https://aws.amazon.com/rds/mysql/pricing/) / AWS Price List API (`AmazonRDS`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - Single-AZ Instance SKU `TDP2T3MABGFDWYMQ`: `db.t3.micro Single-AZ instance hour running MySQL` (**$0.0250000000 per hour**)
+  - Single-AZ gp3 Storage Rate: `APS3-RDS:GP3-Storage` (**$0.1310000000 per GB-month**)
 - **Billing Dimensions & Unit Rates:**
   - Instance: `db.t3.micro` Single-AZ MySQL: **$0.025 per hour**
   - Storage: General Purpose SSD (`gp3`) Single-AZ: **$0.131 per GB-month**
@@ -147,6 +163,7 @@ This document records the pricing model, authoritative AWS sources, verification
   - *Low:* 730h db.t3.micro + 20 GB gp3 storage = (730 × $0.025) + (20 × $0.131) = $18.25 + $2.62 = **$20.87/mo**
   - *High:* 730h db.t3.micro + 100 GB gp3 storage = (730 × $0.025) + (100 × $0.131) = $18.25 + $13.10 = **$31.35/mo**
 - **Important Conditions & Exclusions:** Backup storage exceeding database size and provisioned IOPS above 3,000 baseline are excluded.
+
 
 ### 9. Amazon RDS Multi-AZ (MySQL)
 - **Catalogue Key:** `RDS_MultiAZ`
@@ -188,6 +205,8 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Official Source:** [Amazon ElastiCache Pricing](https://aws.amazon.com/elasticache/pricing/) / AWS Price List API (`AmazonElastiCache`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - `cache.t3.micro` Redis SKU `XZTCQWH2CTD9RTXE`: `APS3-NodeUsage:cache.t3.micro` (**$0.0210000000 per node-hour**)
 - **Billing Dimensions & Unit Rates:**
   - Node Type: `cache.t3.micro` Redis: **$0.021 per node-hour**
 - **Usage Assumptions (730 hours/month):**
@@ -200,6 +219,10 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Official Source:** [Amazon S3 Pricing](https://aws.amazon.com/s3/pricing/) / AWS Price List API (`AmazonS3`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - Standard Storage SKU `USGUTP2JY23N9GH2`: `APS3-TimedStorage-ByteHrs` (0–50 TB: **$0.0250000000 per GB-month**)
+  - Tier 1 Requests SKU `UJ844B8DVMQUFJQP`: `APS3-Requests-Tier1` (**$0.0050000000 per 1,000 PUT, COPY, POST, LIST**)
+  - Tier 2 Requests SKU `SF3QQQMZGA3PPF33`: `APS3-Requests-Tier2` (**$0.0004000000 per 1,000 GET and all other**)
 - **Billing Dimensions & Unit Rates:**
   - Standard Storage: **$0.025 per GB-month** (first 50 TB)
   - Tier 1 Requests (PUT, COPY, POST, LIST): **$0.005 per 1,000 requests** ($0.000005/req)
@@ -207,13 +230,18 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Usage Assumptions:**
   - *Low:* 50 GB storage + 20,000 PUTs + 200,000 GETs = (50 × $0.025) + (20 × $0.005) + (200 × $0.0004) = $1.25 + $0.10 + $0.08 = **$1.43/mo**
   - *High:* 500 GB storage + 100,000 PUTs + 1,000,000 GETs = (500 × $0.025) + (100 × $0.005) + (1,000 × $0.0004) = $12.50 + $0.50 + $0.40 = **$13.40/mo**
-- **Important Conditions & Exclusions:** Data transfer out to the internet and lifecycle transitions to Glacier are excluded.
+- **Important Conditions & Exclusions:** Data transfer out to the internet and lifecycle transitions to Glacier are excluded. 12-Month Free Tier (5 GB) is not modeled for production estimates.
 
 ### 13. Amazon SQS
 - **Catalogue Key:** `SQS`
 - **Official Source:** [Amazon SQS Pricing](https://aws.amazon.com/sqs/pricing/) / AWS Price List API (`AWSQueueService`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - Standard Requests SKU `Y6JJ7JBXQG364CH7`: `APS3-Requests-Tier1` Standard (**$0.40 per million requests** = $0.0000004000/req, Tier 1 up to 100 billion reqs/mo)
+  - Monthly Free Allowance SKU `MNCJEPJRCSC9RFY2`: `Global-Requests` Any (**First 1,000,000 requests free per month** = $0.0000000000)
+  - FIFO Requests SKU `WXF9K2K46U6ZR9US`: `APS3-Requests-FIFO-Tier1` FIFO (**$0.50 per million requests** = $0.0000005000/req)
+  - Fair Queue SKU `2M2GBHBUZDGCE7CK`: `APS3-Requests-Fair-Tier1` Fair (**$0.10 per million requests** = $0.0000001000/req)
 - **Billing Dimensions & Unit Rates:**
   - Free Allowance: First 1,000,000 requests free each month under AWS Always Free tier
   - Standard Queue: **$0.40 per million requests** ($0.0000004 per request)
@@ -226,7 +254,9 @@ This document records the pricing model, authoritative AWS sources, verification
     - 1,000,000 requests: $1.0 \times \$0.40 = \mathbf{\$0.40/\text{mo}}$
     - 2,000,000 requests: $2.0 \times \$0.40 = \mathbf{\$0.80/\text{mo}}$
     - 10,000,000 requests: $10.0 \times \$0.40 = \mathbf{\$4.00/\text{mo}}$
-- **Important Conditions & Exclusions:** FIFO queue rate ($0.50/M) and payloads over 64 KB (which are billed as multiple 64 KB billable requests) are excluded.
+  - *Multi-Queue Account Pooling:*
+    - When multiple queues exist in an architecture, the 1M allowance is shared across queues. Line-item breakdown assigns the allowance sequentially in order of appearance as an estimation convention; the overall architecture total is invariant to resource ordering.
+- **Important Conditions & Exclusions:** Standard queue requests are metered in 64 KB chunks (payloads from 64 KB to 256 KB count as 2 to 4 billable requests). FIFO queues ($0.50/M) and cross-region queue data transfer are excluded from standard baseline.
 
 ### 14. Amazon Cognito
 - **Catalogue Key:** `Cognito`
@@ -264,6 +294,15 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Official Source:** [Amazon CloudWatch Pricing](https://aws.amazon.com/cloudwatch/pricing/) / AWS Price List API (`AmazonCloudWatch`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - Custom Metrics SKU `WJAN9NR7AQ8KWB2U`: `APS3-CW:MetricMonitorUsage` (0–10,000 metrics: **$0.3000000000 per metric-month**)
+  - Standard Alarms SKU `MBFPHE42AKJWSCZH`: `APS3-CW:AlarmMonitorUsage` (**$0.1000000000 per alarm-month**)
+  - Log Ingestion SKU `JBQP6QEETS2BK5DQ`: `APS3-DataProcessing-Bytes` (**$0.6700000000 per GB custom log data ingested in Standard log class**)
+  - Log Storage SKU `M9PG5USRE2QBB6FU`: `APS3-TimedStorage-ByteHrs` (**$0.0300000000 per GB-month**)
+  - Free Tier Custom Metrics SKU `3ZJZSGX8K87XPW4R`: `Global-CW:MetricMonitorUsage` (First 10 metrics free per month)
+  - Free Tier Alarms SKU `FCH8WPMWVXA4B6VM`: `Global-CW:AlarmMonitorUsage` (First 10 alarms free per month)
+  - Free Tier Log Ingestion SKU `SSNSJENVU973ECHE`: `Global-DataProcessing-Bytes` (First 5 GB free per month)
+  - Free Tier Log Storage SKU `6XTVPDAM3VF25UTA`: `Global-TimedStorage-ByteHrs` (First 5 GB free per month)
 - **Billing Dimensions & Unit Rates:**
   - Custom Metrics: **$0.30 per metric-month** (first 10,000)
   - Standard Alarms: **$0.10 per alarm-month**
@@ -273,6 +312,7 @@ This document records the pricing model, authoritative AWS sources, verification
   - *Low:* 5 metrics ($1.50) + 2 alarms ($0.20) + 5 GB logs ($3.35) + 5 GB storage ($0.15) = **$5.20/mo**
   - *High:* 20 metrics ($6.00) + 5 alarms ($0.50) + 25 GB logs ($16.75) + 25 GB storage ($0.75) = **$24.00/mo**
 - **Important Conditions & Exclusions:** Contributor Insights and high-resolution metrics are excluded.
+
 
 ### 17. AWS Identity and Access Management (IAM)
 - **Catalogue Key:** `IAM`

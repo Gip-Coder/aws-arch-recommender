@@ -624,3 +624,73 @@ def test_unverified_partial_estimate_reconciliation():
     # Verified SQS part: 2M - 1M free = 1M * 0.40 = $0.40
     assert res["partial_verified_monthly_usd_low"] == 0.40
     assert res["partial_verified_monthly_usd_high"] == 0.40
+
+
+def test_resource_ordering_invariance_on_architecture_total():
+    """Resource ordering does not change the total architecture cost when aggregate usage is unchanged."""
+    q_a = {"id": "qa", "type": "SQS", "requests": 400000}
+    q_b = {"id": "qb", "type": "SQS", "requests": 900000}
+
+    # Order A: qa then qb
+    res_ab = estimate_cost({"services": [q_a, q_b], "free_tier_mode": "available"})
+    # Order B: qb then qa
+    res_ba = estimate_cost({"services": [q_b, q_a], "free_tier_mode": "available"})
+
+    # Aggregate usage: 1,300,000 requests. 1M free allowance -> 300,000 billable @ $0.40/M = $0.12
+    assert res_ab["status"] == "complete"
+    assert res_ba["status"] == "complete"
+    assert res_ab["monthly_usd_low"] == 0.12
+    assert res_ba["monthly_usd_low"] == 0.12
+    assert res_ab["monthly_usd_low"] == res_ba["monthly_usd_low"]
+    assert res_ab["monthly_usd_high"] == res_ba["monthly_usd_high"]
+
+    # Sequential line item breakdown reflects arrival order convention, while total is invariant
+    assert res_ab["breakdown"]["qa"]["monthly_usd_low"] == 0.00
+    assert res_ab["breakdown"]["qb"]["monthly_usd_low"] == 0.12
+    assert res_ba["breakdown"]["qb"]["monthly_usd_low"] == 0.00
+    assert res_ba["breakdown"]["qa"]["monthly_usd_low"] == 0.12
+
+
+def test_allowance_exhaustion_multi_queue():
+    """First queue fully exhausts 1M allowance; subsequent queue is fully billable."""
+    arch = {
+        "services": [
+            {"id": "q1", "type": "SQS", "requests": 1500000},
+            {"id": "q2", "type": "SQS", "requests": 500000},
+        ],
+        "free_tier_mode": "available",
+    }
+    res = estimate_cost(arch)
+    assert res["status"] == "complete"
+    # q1: 1.5M requests - 1M free = 0.5M billable -> 0.5 * $0.40 = $0.20
+    assert res["breakdown"]["q1"]["monthly_usd_low"] == 0.20
+    assert abs(res["breakdown"]["q1"]["billable_quantity_low"] - 0.5) < 1e-9
+
+    # q2: allowance is exhausted (0 available) -> all 0.5M billable -> 0.5 * $0.40 = $0.20
+    assert res["breakdown"]["q2"]["monthly_usd_low"] == 0.20
+    assert abs(res["breakdown"]["q2"]["billable_quantity_low"] - 0.5) < 1e-9
+
+    # Total: 2.0M requests - 1.0M allowance = 1.0M billable -> $0.40
+    assert res["monthly_usd_low"] == 0.40
+
+
+def test_fifo_queue_pricing_model():
+    """FIFO queue pricing ($0.50/M) is supported when defined in catalogue without standard free tier."""
+    fifo_cat = {
+        "services": {
+            "SQS_FIFO": {
+                "pricing": {
+                    "unit_price": 0.50,
+                    "unit": "USD per million requests",
+                    "status": "verified",
+                    "source_url": "https://aws.amazon.com/sqs/pricing/",
+                    "usage_assumptions": {"low_quantity": 2.0, "high_quantity": 10.0, "unit": "million requests"},
+                }
+            }
+        }
+    }
+    arch = {"services": [{"id": "qf", "type": "SQS_FIFO", "requests": 2000000}]}
+    res = estimate_cost(arch, catalogue=fifo_cat)
+    assert res["status"] == "complete"
+    # 2M requests @ $0.50/M = $1.00
+    assert res["breakdown"]["qf"]["monthly_usd_low"] == 1.00
