@@ -20,11 +20,18 @@ This document records the pricing model, authoritative AWS sources, verification
    - **Fully Unknown Architecture Cost:** All selected components are unverified. Both total low/high estimates are `null` and no partial totals are asserted.
 4. **Verified Zero-Cost vs. Free Tier Allowances:**
    - Core IAM permissions, roles, and policies are officially offered by AWS at **no additional charge** ($0.00). This is distinguished from services that incur charges once free-tier thresholds are exceeded.
-5. **Reusable Free Allowance Accounting (`free_tier_mode`):**
-   - **`available` (default):** Assumes the AWS account qualifies for the applicable monthly free allowance and has not consumed it across other workloads. The allowance is subtracted prior to billing: $\text{billable} = \max(0, \text{usage} - \text{allowance})$.
-   - **`consumed` / `ineligible`:** Assumes the allowance has already been exhausted by other applications in the account or the workload does not qualify. Full on-demand unit rates apply to all usage.
-   - **`unknown`:** Conservatively calculates full on-demand charges while transparently reporting potential free-tier savings.
-6. **Usage Range Semantics:**
+5. **Account-Level Free Allowance Pooling (`free_tier_mode`):**
+   - AWS Free Tier allowances (e.g. SQS 1M requests, DynamoDB 25 GB storage, Cognito 50k MAUs) are granted **per AWS account**, never per queue, table, or resource.
+   - **`available` (default):** Assumes an eligible AWS account with unused monthly allowance. When multiple resources in the architecture share the same service dimension, allowance is pooled and shared (e.g. two SQS queues sharing 1M free requests total, not 1M per queue).
+   - **`consumed` / `ineligible`:** Assumes the allowance is already exhausted by other workloads or the account does not qualify. Full on-demand unit rates apply to all usage.
+   - **`unknown`:** Conservatively calculates full on-demand charges while disclosing potential savings and adding an explicit transparency note (`free_tier_note`).
+6. **Financial Currency Precision & Line-Item Reconciliation:**
+   - Calculations use `decimal.Decimal` with financial `ROUND_HALF_UP` quantization.
+   - Displayed line items are rounded to 2 decimal places, while internal unrounded costs (`unrounded_monthly_usd_low/high`) are preserved to prevent premature loss of small charges (e.g. 1,000,001 requests displays as $0.00 while internal cost remains positive at $0.0000004).
+   - The total architecture cost exactly reconciles with the sum of displayed line items.
+7. **Unit-Driven Normalization:**
+   - Usage quantities are converted strictly via explicit units (e.g. `"requests"` vs `"million requests"`, `"tokens"` vs `"1,000 tokens"`) or catalogue-defined metadata, avoiding ambiguous magnitude thresholds.
+8. **Usage Range Semantics:**
    - **Low Estimate:** Baseline production usage (minimum redundancy, baseline storage, light traffic).
    - **High Estimate:** Scaled production usage (multi-instance/multi-task scaling, higher storage retention, elevated request volume).
    - Standard monthly duration is modelled using 730 hours per month as an explicitly documented operational approximation.
@@ -78,6 +85,9 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Official Source:** [Amazon API Gateway Pricing](https://aws.amazon.com/api-gateway/pricing/) / AWS Price List API (`AmazonApiGateway`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - HTTP API SKU `S2BWD3VP3K4M5Q9P`: `APS3-ApiGatewayHttpRequest` ($0.0000010500 per request = **$1.05 per million requests**)
+  - REST API SKU `AEUDCPQMKMJHSZGF`: `APS3-ApiGatewayRequest` ($0.0000035000 per request = **$3.50 per million requests**)
 - **Billing Dimensions & Unit Rates:**
   - HTTP API: **$1.05 per million requests** (first 300 million)
   - REST API: **$3.50 per million requests** (first 333 million)
@@ -143,6 +153,9 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Official Source:** [Amazon RDS for MySQL Pricing](https://aws.amazon.com/rds/mysql/pricing/) / AWS Price List API (`AmazonRDS`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - Multi-AZ Instance SKU `XY6F6U9686MYMXAN`: `db.t3.micro Multi-AZ instance hour running MySQL` (**$0.0490000000 per hour**)
+  - Multi-AZ Storage Rate: `APS3-RDS:Multi-AZ-GP3-Storage`: `GB-month of provisioned GP3 storage for Multi-AZ deployments running MySQL` (**$0.2620000000 per GB-month**)
 - **Billing Dimensions & Unit Rates:**
   - Instance: `db.t3.micro` Multi-AZ MySQL: **$0.049 per hour**
   - Storage: General Purpose SSD (`gp3`) Multi-AZ: **$0.262 per GB-month** (2x Single-AZ replication)
@@ -156,6 +169,10 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Official Source:** [Amazon DynamoDB Pricing](https://aws.amazon.com/dynamodb/pricing/) / AWS Price List API (`AmazonDynamoDB`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - Storage SKU `8Q6HK3ASV67MN388`: `APS3-TimedStorage-ByteHrs` (0–25 GB: **$0.00** free tier; >25 GB: **$0.2850000000 per GB-month**)
+  - Write Request Units SKU `A5DP2X4YSZ84WEJA`: `APS3-WriteRequestUnits` (**$0.71 per million WRU** = $0.0000007100/unit)
+  - Read Request Units SKU `HQZY4ZFUTRDPV7ZE`: `APS3-ReadRequestUnits` (**$0.1425 per million RRU** = $0.0000001425/unit)
 - **Billing Dimensions & Unit Rates (On-Demand):**
   - Standard Storage: **$0.285 per GB-month** (First 25 GB free)
   - Read Request Units (RRU): **$0.1425 per million RRU** ($0.0000001425 per unit)
@@ -164,6 +181,7 @@ This document records the pricing model, authoritative AWS sources, verification
   - *Low:* 10 GB storage (within free tier = $0.00) + 5M RRU + 1M WRU = $0.00 + (5 × $0.1425) + (1 × $0.71) = **$1.42/mo**
   - *High:* 50 GB storage (25 GB billed @ $0.285 = $7.13) + 25M RRU + 5M WRU = $7.13 + (25 × $0.1425) + (5 × $0.71) = $7.13 + $3.56 + $3.55 = **$14.24/mo**
 - **Important Conditions & Exclusions:** Point-in-time recovery (PITR) and global tables replication are excluded.
+
 
 ### 11. Amazon ElastiCache
 - **Catalogue Key:** `ElastiCache`
@@ -215,6 +233,8 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Official Source:** [Amazon Cognito Pricing](https://aws.amazon.com/cognito/pricing/) / AWS Price List API (`AmazonCognito`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - User Pools MAU SKU `SJDJQB52YRYNVHRN`: `APS3-CognitoUserPoolsMAU` (0–50k MAU: **$0.00** free tier; 50k–100k MAU: **$0.0055000000 per MAU**)
 - **Billing Dimensions & Unit Rates:**
   - Free Tier: First 50,000 Monthly Active Users (MAUs) free each month
   - Tier 1 (50,001 to 100,000 MAUs): **$0.0055 per MAU**
@@ -228,6 +248,9 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Official Source:** [Amazon Bedrock Pricing](https://aws.amazon.com/bedrock/pricing/) / AWS Price List API (`AmazonBedrock`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
+- **Price List API Verification & SKUs:**
+  - Titan Text Express Input SKU `6UNCKSWRDBPA548S`: `APS3-TitanTextG1-Express-input-tokens` (**$0.0010000000 per 1,000 tokens** = $1.00/M tokens)
+  - Titan Text Express Output SKU `NHZ5ECAKWBFG3N8H`: `APS3-TitanTextG1-Express-output-tokens` (**$0.0019000000 per 1,000 tokens** = $1.90/M tokens)
 - **Billing Dimensions & Unit Rates (Amazon Titan Text Express):**
   - Input Tokens: **$0.001 per 1,000 tokens** ($1.00 per 1M tokens)
   - Output Tokens: **$0.0019 per 1,000 tokens** ($1.90 per 1M tokens)
