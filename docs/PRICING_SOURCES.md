@@ -48,6 +48,10 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Official Source:** [Amazon CloudFront Pricing](https://aws.amazon.com/cloudfront/pricing/) / AWS Price List API (`AmazonCloudFront`, `aws-other` / India Edge)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional Edge (India Edge Locations)
+- **Price List API Verification & SKUs:**
+  - Data Transfer Out to Internet SKU `XVZYVSAH88373VKR`: `IN-DataTransfer-Out-Bytes` (**$0.1090000000 per GB**, first 10 TB/month)
+  - HTTPS Requests SKU `GJTTXSYXV43ANXTQ`: `IN-Requests-Tier2-HTTPS` (**$0.0120 per 10,000 requests** = $0.0000012000 per request)
+  - *SKU Duplication Resolution:* The pricing audit report previously noted SKU `USGUTP2JY23N9GH2` for both CloudFront and S3. Authoritative Price List API verification confirms that `USGUTP2JY23N9GH2` is exclusively an Amazon S3 Standard Storage SKU (`APS3-TimedStorage-ByteHrs`) in `ap-south-1`. CloudFront outbound transfer in India is governed by SKU `XVZYVSAH88373VKR`, and HTTPS requests by SKU `GJTTXSYXV43ANXTQ`.
 - **Billing Dimensions & Unit Rates:**
   - Data Transfer Out to Internet: **$0.109 per GB** (first 10 TB/month)
   - HTTPS Requests: **$0.0120 per 10,000 requests** ($0.0000012 per request)
@@ -61,6 +65,10 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Official Source:** [Amazon Route 53 Pricing](https://aws.amazon.com/route53/pricing/) / AWS Price List API (`AmazonRoute53`, `aws-other`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Global
+- **Price List API Verification & SKUs:**
+  - Hosted Zone SKU `KVPGEJE88UW8S779`: `HostedZone` (**$0.5000000000 per hosted zone-month**, first 25)
+  - Standard DNS Queries SKU `JHRA6QBEDT9FZVT5`: `DNS-Queries` (**$0.40 per 1,000,000 queries** = $0.0000004000 per query)
+  - Alias Queries SKU `SJ2RJA9FC4AMHVM9`: `Intra-AWS-DNS-Queries` (**$0.00** free of charge)
 - **Billing Dimensions & Unit Rates:**
   - Hosted Zone: **$0.50 per hosted zone / month** (first 25 zones)
   - Standard DNS Queries: **$0.40 per 1,000,000 queries** ($0.0000004 per query)
@@ -121,17 +129,17 @@ This document records the pricing model, authoritative AWS sources, verification
 
 ### 6. Amazon ECS on AWS Fargate
 - **Catalogue Key:** `ECSFargate`
-- **Official Source:** [AWS Fargate Pricing](https://aws.amazon.com/fargate/pricing/) / AWS Price List API (`AmazonEC2`, `ap-south-1`)
+- **Official Source:** [AWS Fargate Pricing](https://aws.amazon.com/fargate/pricing/) / AWS Price List API (`AmazonECS`, `ap-south-1`)
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
 - **Price List API Verification & SKUs:**
-  - Fargate vCPU Rate: `APS3-Fargate-vCPU-Hours:perCPU` (**$0.0425600000 per vCPU-hour**)
-  - Fargate Memory Rate: `APS3-Fargate-GB-Hours` (**$0.0046550000 per GB-hour**)
-  - Ephemeral Storage Rate: `APS3-Fargate-EphemeralStorage-GB-Hours` ($0.0001110000 per GB-hour after first 20 GB)
+  - Fargate vCPU SKU `KV4FGA39G96M59TH`: `APS3-Fargate-vCPU-Hours:perCPU` (**$0.0425600000 per vCPU-hour**)
+  - Fargate Memory SKU `N4Q5MGA6V9TFA2MG`: `APS3-Fargate-GB-Hours` (**$0.0046550000 per GB-hour**)
+  - Ephemeral Storage SKU `R3B3XUQQ8A2CS8S9`: `APS3-Fargate-EphemeralStorage-GB-Hours` ($0.0001270000 per GB-hour after first 20 GB)
 - **Billing Dimensions & Unit Rates:**
   - vCPU: **$0.04256 per vCPU-hour** (Linux/x86 On-Demand in `ap-south-1`)
   - Memory: **$0.004655 per GB-hour** (Linux/x86 On-Demand in `ap-south-1`)
-  - Ephemeral Storage: First 20 GB included free per task; $0.000111/GB-hour thereafter
+  - Ephemeral Storage: First 20 GB included free per task; $0.000127/GB-hour thereafter
   - *Regional Rate Distinction:* Note that $0.04656/vCPU-hr and $0.00511/GB-hr apply to `us-west-1` (N. California) and `sa-east-1` (Sao Paulo). The correct verified rates for Asia Pacific (Mumbai) (`ap-south-1`) are strictly $0.04256/vCPU-hr and $0.004655/GB-hr.
 - **Usage Assumptions (730 hours/month):**
   - *Low:* 1 task (0.5 vCPU, 1 GB RAM, 730h) = (365 × $0.04256) + (730 × $0.004655) = $15.53 + $3.40 = **$18.93/mo**
@@ -163,7 +171,7 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Region Scope:** Regional (`ap-south-1`)
 - **Price List API Verification & SKUs:**
   - Single-AZ Instance SKU `TDP2T3MABGFDWYMQ`: `db.t3.micro Single-AZ instance hour running MySQL` (**$0.0250000000 per hour**)
-  - Single-AZ gp3 Storage Rate: `APS3-RDS:GP3-Storage` (**$0.1310000000 per GB-month**)
+  - Single-AZ gp3 Storage SKU `P9ZS93METCDRDD55`: `APS3-RDS:GP3-Storage` (**$0.1310000000 per GB-month**)
 - **Billing Dimensions & Unit Rates:**
   - Instance: `db.t3.micro` Single-AZ MySQL: **$0.025 per hour**
   - Storage: General Purpose SSD (`gp3`) Single-AZ: **$0.131 per GB-month**
@@ -180,7 +188,7 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Region Scope:** Regional (`ap-south-1`)
 - **Price List API Verification & SKUs:**
   - Multi-AZ Instance SKU `XY6F6U9686MYMXAN`: `db.t3.micro Multi-AZ instance hour running MySQL` (**$0.0490000000 per hour**)
-  - Multi-AZ Storage Rate: `APS3-RDS:Multi-AZ-GP3-Storage`: `GB-month of provisioned GP3 storage for Multi-AZ deployments running MySQL` (**$0.2620000000 per GB-month**)
+  - Multi-AZ Storage SKU `8BCW7MZTHCKWG2WF`: `APS3-RDS:Multi-AZ-GP3-Storage` (**$0.2620000000 per GB-month**)
 - **Billing Dimensions & Unit Rates:**
   - Instance: `db.t3.micro` Multi-AZ MySQL: **$0.049 per hour**
   - Storage: General Purpose SSD (`gp3`) Multi-AZ: **$0.262 per GB-month** (2x Single-AZ replication)

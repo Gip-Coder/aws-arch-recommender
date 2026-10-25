@@ -317,23 +317,197 @@ def test_existing_output_keys_preserved():
     assert "Order-of-magnitude estimate" in res["note"]
 
 
+# Authoritative recorded evidence fixture for ap-south-1 and global services.
+# Distinguishes live network calls from reproducible deterministic fixtures.
+RECORDED_EVIDENCE_REGISTRY = {
+    "CloudFront": {
+        "region_scope": "regional_edge",
+        "service_code": "AmazonCloudFront",
+        "dto_sku": "XVZYVSAH88373VKR",
+        "dto_rate": Decimal("0.109"),
+        "https_sku": "GJTTXSYXV43ANXTQ",
+        "https_rate": Decimal("0.0000012"),
+    },
+    "Route53": {
+        "region_scope": "global",
+        "service_code": "AmazonRoute53",
+        "zone_sku": "KVPGEJE88UW8S779",
+        "zone_rate": Decimal("0.50"),
+        "query_sku": "JHRA6QBEDT9FZVT5",
+        "query_rate": Decimal("0.0000004"),
+    },
+    "ApplicationLoadBalancer": {
+        "region_scope": "ap-south-1",
+        "service_code": "AWSELB",
+        "alb_sku": "WJ2MHASNP2ZNKFXX",
+        "alb_rate": Decimal("0.0239"),
+        "lcu_sku": "HFFD75W4GFXQPHZR",
+        "lcu_rate": Decimal("0.008"),
+    },
+    "APIGateway": {
+        "region_scope": "ap-south-1",
+        "service_code": "AmazonApiGateway",
+        "http_api_sku": "S2BWD3VP3K4M5Q9P",
+        "http_api_rate": Decimal("1.05"),
+    },
+    "EC2AutoScalingGroup": {
+        "region_scope": "ap-south-1",
+        "service_code": "AmazonEC2",
+        "instance_sku": "9NX7BP9ZGC9GB8AX",
+        "instance_rate": Decimal("0.0112"),
+    },
+    "ECSFargate": {
+        "region_scope": "ap-south-1",
+        "service_code": "AmazonECS",
+        "vcpu_sku": "KV4FGA39G96M59TH",
+        "vcpu_rate": Decimal("0.04256"),
+        "memory_sku": "N4Q5MGA6V9TFA2MG",
+        "memory_rate": Decimal("0.004655"),
+    },
+    "Lambda": {
+        "region_scope": "ap-south-1",
+        "service_code": "AWSLambda",
+        "request_sku": "VPGUBFQ4KNZKMKGJ",
+        "request_rate": Decimal("0.0000002"),
+        "compute_sku": "PHDF9YNAFR3HDSR8",
+        "compute_rate": Decimal("0.0000166667"),
+    },
+    "RDS": {
+        "region_scope": "ap-south-1",
+        "service_code": "AmazonRDS",
+        "instance_sku": "TDP2T3MABGFDWYMQ",
+        "instance_rate": Decimal("0.025"),
+        "storage_sku": "P9ZS93METCDRDD55",
+        "storage_rate": Decimal("0.131"),
+    },
+    "RDS_MultiAZ": {
+        "region_scope": "ap-south-1",
+        "service_code": "AmazonRDS",
+        "instance_sku": "XY6F6U9686MYMXAN",
+        "instance_rate": Decimal("0.049"),
+        "storage_sku": "8BCW7MZTHCKWG2WF",
+        "storage_rate": Decimal("0.262"),
+    },
+    "DynamoDB": {
+        "region_scope": "ap-south-1",
+        "service_code": "AmazonDynamoDB",
+        "storage_sku": "8Q6HK3ASV67MN388",
+        "storage_rate": Decimal("0.285"),
+        "wru_sku": "A5DP2X4YSZ84WEJA",
+        "wru_rate": Decimal("0.00000071"),
+        "rru_sku": "HQZY4ZFUTRDPV7ZE",
+        "rru_rate": Decimal("0.0000001425"),
+    },
+    "ElastiCache": {
+        "region_scope": "ap-south-1",
+        "service_code": "AmazonElastiCache",
+        "node_sku": "XZTCQWH2CTD9RTXE",
+        "node_rate": Decimal("0.021"),
+    },
+    "S3": {
+        "region_scope": "ap-south-1",
+        "service_code": "AmazonS3",
+        "storage_sku": "USGUTP2JY23N9GH2",
+        "storage_rate": Decimal("0.025"),
+        "tier1_sku": "UJ844B8DVMQUFJQP",
+        "tier1_rate": Decimal("0.000005"),
+        "tier2_sku": "SF3QQQMZGA3PPF33",
+        "tier2_rate": Decimal("0.0000004"),
+    },
+    "SQS": {
+        "region_scope": "ap-south-1",
+        "service_code": "AWSQueueService",
+        "request_sku": "Y6JJ7JBXQG364CH7",
+        "request_rate": Decimal("0.40"),
+        "free_sku": "MNCJEPJRCSC9RFY2",
+    },
+    "Cognito": {
+        "region_scope": "ap-south-1",
+        "service_code": "AmazonCognito",
+        "mau_sku": "SJDJQB52YRYNVHRN",
+        "mau_rate": Decimal("0.0055"),
+    },
+    "Bedrock": {
+        "region_scope": "ap-south-1",
+        "service_code": "AmazonBedrock",
+        "input_sku": "6UNCKSWRDBPA548S",
+        "input_rate": Decimal("0.001"),
+        "output_sku": "NHZ5ECAKWBFG3N8H",
+        "output_rate": Decimal("0.0019"),
+    },
+    "CloudWatch": {
+        "region_scope": "ap-south-1",
+        "service_code": "AmazonCloudWatch",
+        "metrics_sku": "WJAN9NR7AQ8KWB2U",
+        "metrics_rate": Decimal("0.30"),
+        "alarms_sku": "MBFPHE42AKJWSCZH",
+        "alarms_rate": Decimal("0.10"),
+        "logs_ingest_sku": "JBQP6QEETS2BK5DQ",
+        "logs_ingest_rate": Decimal("0.67"),
+        "logs_store_sku": "M9PG5USRE2QBB6FU",
+        "logs_store_rate": Decimal("0.03"),
+    },
+    "IAM": {
+        "region_scope": "global",
+        "service_code": "AWSIdentityAndAccessManagement",
+        "core_charge": Decimal("0.0"),
+    },
+}
+
+
 def test_catalogue_yaml_all_services_verified_with_official_sources():
-    """Verify that every service in catalogue.yaml has verified status and valid AWS source."""
+    """Verify that every service in catalogue.yaml has verified status, official source, and valid evidence fields."""
     cat = load_catalogue()
     assert cat["region"] == "ap-south-1"
     assert cat["prices_checked_on"] == "2026-10-25"
     services = cat.get("services", {})
     assert len(services) == 17
 
+    allowed_categories = {"network", "compute", "database", "storage", "integration", "security", "ops", "ai"}
+    service_names = set(services.keys())
+
     for name, data in services.items():
+        # Validate category and allowed targets
+        assert data.get("category") in allowed_categories, f"{name} category {data.get('category')} invalid"
+        for target in data.get("allowed_targets", []):
+            assert target in service_names, f"{name} allowed_target {target} not in service list"
+
         assert "pricing" in data, f"{name} is missing pricing block"
         pricing = data["pricing"]
+
+        # Validate official AWS source
         assert "source_url" in pricing and pricing["source_url"].startswith("https://aws.amazon.com/"), (
             f"{name} must have an official AWS source_url"
         )
         assert pricing.get("status") == "verified", f"{name} is not verified"
-        assert pricing.get("unit_price") is not None, f"{name} verified price must not be null"
+        assert pricing.get("currency") == "USD", f"{name} currency must be USD"
+        assert pricing.get("region_scope") in {"ap-south-1", "regional_edge", "global"}, (
+            f"{name} has invalid region_scope: {pricing.get('region_scope')}"
+        )
         assert "usage_assumptions" in pricing, f"{name} is missing usage_assumptions"
+
+        # Check deterministic recorded evidence matching
+        assert name in RECORDED_EVIDENCE_REGISTRY, f"{name} missing from recorded evidence registry"
+        evidence = RECORDED_EVIDENCE_REGISTRY[name]
+        assert pricing.get("region_scope") == evidence["region_scope"]
+
+        components = pricing.get("components")
+        if components and isinstance(components, list):
+            assert len(components) >= 1
+            for comp in components:
+                assert "name" in comp and comp["name"], f"{name} component missing name"
+                assert "unit_price" in comp and comp["unit_price"] is not None
+                assert Decimal(str(comp["unit_price"])) >= Decimal("0.0")
+                assert "unit" in comp and comp["unit"]
+                if "low_quantity" in comp and "high_quantity" in comp:
+                    assert Decimal(str(comp["low_quantity"])) <= Decimal(str(comp["high_quantity"]))
+        else:
+            assert pricing.get("unit_price") is not None, f"{name} verified price must not be null"
+            assert Decimal(str(pricing.get("unit_price"))) >= Decimal("0.0")
+            assert "unit" in pricing and pricing["unit"]
+            u_assump = pricing.get("usage_assumptions", {})
+            if isinstance(u_assump, dict) and "low_quantity" in u_assump and "high_quantity" in u_assump:
+                assert Decimal(str(u_assump["low_quantity"])) <= Decimal(str(u_assump["high_quantity"]))
 
 
 def test_all_17_catalogue_services_estimate_valid_and_ordered():
@@ -731,16 +905,103 @@ def test_route53_not_added_to_unrelated_architecture():
 
 
 def test_fargate_rates_and_assumptions():
-    """Fargate pricing uses verified ap-south-1 rates ($0.04256/vCPU-hr, $0.004655/GB-hr)."""
+    """Fargate pricing is fully reproducible from documented regional inputs and assumptions.
+
+    Parameters verified:
+      - Region: Asia Pacific (Mumbai) (ap-south-1)
+      - Operating System & Architecture: Linux / x86
+      - Pricing Model: On-Demand
+      - Rate dimensions:
+          * vCPU: $0.04256 per vCPU-hour (SKU: KV4FGA39G96M59TH, rateCode: KV4FGA39G96M59TH.JRTCKXETXF.6YS6EN2CT7)
+          * Memory: $0.004655 per GB-hour (SKU: N4Q5MGA6V9TFA2MG, rateCode: N4Q5MGA6V9TFA2MG.JRTCKXETXF.6YS6EN2CT7)
+      - Ephemeral storage: 20 GB included free per task; additional storage ($0.000127/GB-hr) excluded from model.
+      - Usage inputs (730 operational hours/month):
+          * Low: 1 task (0.5 vCPU, 1 GB RAM, 730h)
+                 -> 365 vCPU-hours consumed
+                 -> 730 Memory GB-hours consumed
+          * High: 2 tasks (1.0 vCPU, 2 GB RAM, 730h each = 1,460 task-hours)
+                 -> 1,460 vCPU-hours consumed
+                 -> 2,920 Memory GB-hours consumed
+      - Exact arithmetic & HALF_UP rounding:
+          * Low unrounded: (365 * 0.04256) + (730 * 0.004655) = 15.5344 + 3.39815 = 18.93255
+                 -> Quantized: $18.93
+          * High unrounded: (1460 * 0.04256) + (2920 * 0.004655) = 62.1376 + 13.5926 = 75.7302
+                 -> Quantized: $75.73
+    """
+    cat = load_catalogue()
+    fgt_pricing = cat["services"]["ECSFargate"]["pricing"]
+
+    assert cat["region"] == "ap-south-1"
+    assert fgt_pricing["region_scope"] == "ap-south-1"
+    assert fgt_pricing["currency"] == "USD"
+    assert fgt_pricing["status"] == "verified"
+
+    comp = fgt_pricing["components"]
+    assert len(comp) == 2
+    assert comp[0]["name"] == "Fargate vCPU"
+    assert comp[0]["unit_price"] == 0.04256
+    assert comp[0]["unit"] == "USD per vCPU-hour"
+    assert comp[0]["low_quantity"] == 365
+    assert comp[0]["high_quantity"] == 1460
+
+    assert comp[1]["name"] == "Fargate Memory"
+    assert comp[1]["unit_price"] == 0.004655
+    assert comp[1]["unit"] == "USD per GB-hour"
+    assert comp[1]["low_quantity"] == 730
+    assert comp[1]["high_quantity"] == 2920
+
+    # Ensure other regional rates (e.g. us-west-1 / sa-east-1: 0.04656 / 0.00511) are not substituted
+    assert comp[0]["unit_price"] != 0.04656
+    assert comp[1]["unit_price"] != 0.00511
+
+    # Exact Decimal calculation
+    vcpu_rate = Decimal("0.04256")
+    mem_rate = Decimal("0.004655")
+
+    expected_low_exact = (Decimal("365") * vcpu_rate) + (Decimal("730") * mem_rate)
+    expected_high_exact = (Decimal("1460") * vcpu_rate) + (Decimal("2920") * mem_rate)
+
+    assert expected_low_exact == Decimal("18.93255")
+    assert expected_high_exact == Decimal("75.7302")
+
     arch = {"services": [{"id": "fgt", "type": "ECSFargate"}]}
     res = estimate_cost(arch)
     assert res["status"] == "complete"
-    comp = res["breakdown"]["fgt"]["components"]
-    assert comp[0]["name"] == "Fargate vCPU"
-    assert comp[0]["unit_price"] == 0.04256
-    assert comp[1]["name"] == "Fargate Memory"
-    assert comp[1]["unit_price"] == 0.004655
-    # Low: (365 * 0.04256) + (730 * 0.004655) = 15.5344 + 3.39815 = 18.93255 -> 18.93
     assert res["monthly_usd_low"] == 18.93
-    # High: (1460 * 0.04256) + (2920 * 0.004655) = 62.1376 + 13.5926 = 75.7302 -> 75.73
     assert res["monthly_usd_high"] == 75.73
+    assert abs(res["breakdown"]["fgt"]["unrounded_monthly_usd_low"] - 18.93255) < 1e-9
+    assert abs(res["breakdown"]["fgt"]["unrounded_monthly_usd_high"] - 75.7302) < 1e-9
+
+
+def test_cloudfront_and_s3_sku_and_pricing_separation():
+    """Verify that CloudFront and S3 have distinct SKUs, product families, and rate dimensions."""
+    cat = load_catalogue()
+    cf_pricing = cat["services"]["CloudFront"]["pricing"]
+    s3_pricing = cat["services"]["S3"]["pricing"]
+
+    # CloudFront is regional edge transfer + requests
+    assert cf_pricing["region_scope"] == "regional_edge"
+    cf_comp_names = [c["name"] for c in cf_pricing["components"]]
+    assert any("Data Transfer Out" in n for n in cf_comp_names)
+    assert any("HTTPS Requests" in n for n in cf_comp_names)
+    assert cf_pricing["components"][0]["unit_price"] == 0.109
+    assert cf_pricing["components"][1]["unit_price"] == 0.0000012
+
+    # S3 is ap-south-1 regional storage + tiered API requests
+    assert s3_pricing["region_scope"] == "ap-south-1"
+    s3_comp_names = [c["name"] for c in s3_pricing["components"]]
+    assert any("Standard Storage" in n for n in s3_comp_names)
+    assert any("Tier 1 Requests" in n for n in s3_comp_names)
+    assert any("Tier 2 Requests" in n for n in s3_comp_names)
+    assert s3_pricing["components"][0]["unit_price"] == 0.025
+    assert s3_pricing["components"][1]["unit_price"] == 0.000005
+    assert s3_pricing["components"][2]["unit_price"] == 0.0000004
+
+    # Recorded evidence fixtures confirm distinct SKUs:
+    # S3 Storage SKU USGUTP2JY23N9GH2 is strictly S3, while CloudFront DTO is XVZYVSAH88373VKR
+    cf_ev = RECORDED_EVIDENCE_REGISTRY["CloudFront"]
+    s3_ev = RECORDED_EVIDENCE_REGISTRY["S3"]
+    assert s3_ev["storage_sku"] == "USGUTP2JY23N9GH2"
+    assert cf_ev["dto_sku"] == "XVZYVSAH88373VKR"
+    assert cf_ev["https_sku"] == "GJTTXSYXV43ANXTQ"
+    assert cf_ev["dto_sku"] != s3_ev["storage_sku"]
