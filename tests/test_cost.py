@@ -348,3 +348,126 @@ def test_all_17_catalogue_services_estimate_valid_and_ordered():
         assert res["monthly_usd_low"] <= res["monthly_usd_high"], (
             f"{name} monthly_usd_low ({res['monthly_usd_low']}) > monthly_usd_high ({res['monthly_usd_high']})"
         )
+
+
+# ==============================================================================
+# Category E: Amazon SQS Free-Tier & Boundary Regression Tests
+# ==============================================================================
+def test_sqs_zero_requests():
+    """SQS with 0 requests must cost exactly $0.00."""
+    arch = {"services": [{"id": "q", "type": "SQS", "usage_quantity": 0}]}
+    res = estimate_cost(arch)
+    assert res["status"] == "complete"
+    assert res["breakdown"]["q"]["monthly_usd_low"] == 0.00
+    assert res["breakdown"]["q"]["monthly_usd_high"] == 0.00
+    assert res["monthly_usd_low"] == 0.00
+    assert res["monthly_usd_high"] == 0.00
+
+
+def test_sqs_usage_below_free_allowance():
+    """SQS with usage below 1M allowance (e.g. 100,000 requests) must cost $0.00."""
+    arch = {"services": [{"id": "q", "type": "SQS", "usage_quantity": 100000}]}
+    res = estimate_cost(arch)
+    assert res["status"] == "complete"
+    assert res["breakdown"]["q"]["monthly_usd_low"] == 0.00
+    assert res["breakdown"]["q"]["monthly_usd_high"] == 0.00
+
+
+def test_sqs_usage_exactly_equal_free_allowance():
+    """SQS with exactly 1M requests (1,000,000) with allowance available costs $0.00."""
+    arch = {"services": [{"id": "q", "type": "SQS", "usage_quantity": 1000000}]}
+    res = estimate_cost(arch)
+    assert res["status"] == "complete"
+    assert res["breakdown"]["q"]["monthly_usd_low"] == 0.00
+    assert res["breakdown"]["q"]["monthly_usd_high"] == 0.00
+
+
+def test_sqs_usage_just_above_free_allowance():
+    """SQS with 1,000,001 requests has 1 billable request."""
+    arch = {"services": [{"id": "q", "type": "SQS", "usage_quantity": 1000001}]}
+    res = estimate_cost(arch)
+    assert res["status"] == "complete"
+    # 1 request * $0.40 / 1,000,000 = $0.0000004 -> rounds to 0.00
+    assert res["breakdown"]["q"]["monthly_usd_low"] == 0.00
+
+
+def test_sqs_usage_2_million_requests_allowance_available():
+    """2M requests with allowance available has 1M billable requests -> $0.40."""
+    arch = {"services": [{"id": "q", "type": "SQS", "usage_quantity": 2000000}]}
+    res = estimate_cost(arch)
+    assert res["status"] == "complete"
+    assert res["breakdown"]["q"]["monthly_usd_low"] == 0.40
+    assert res["breakdown"]["q"]["monthly_usd_high"] == 0.40
+
+
+def test_sqs_usage_10_million_requests_allowance_available():
+    """10M requests with allowance available has 9M billable requests -> $3.60."""
+    arch = {"services": [{"id": "q", "type": "SQS", "usage_quantity": 10000000}]}
+    res = estimate_cost(arch)
+    assert res["status"] == "complete"
+    assert res["breakdown"]["q"]["monthly_usd_low"] == 3.60
+    assert res["breakdown"]["q"]["monthly_usd_high"] == 3.60
+
+
+def test_sqs_allowance_already_consumed():
+    """When allowance is consumed, full usage is billed (1M -> $0.40; 10M -> $4.00)."""
+    arch_1m = {
+        "services": [{"id": "q", "type": "SQS", "usage_quantity": 1000000}],
+        "free_tier_mode": "consumed",
+    }
+    res_1m = estimate_cost(arch_1m)
+    assert res_1m["breakdown"]["q"]["monthly_usd_low"] == 0.40
+    assert res_1m["breakdown"]["q"]["monthly_usd_high"] == 0.40
+
+    arch_10m = {
+        "services": [{"id": "q", "type": "SQS", "usage_quantity": 10000000}],
+        "free_tier_mode": "consumed",
+    }
+    res_10m = estimate_cost(arch_10m)
+    assert res_10m["breakdown"]["q"]["monthly_usd_low"] == 4.00
+    assert res_10m["breakdown"]["q"]["monthly_usd_high"] == 4.00
+
+
+def test_sqs_workload_ineligible_for_allowance():
+    """When workload is ineligible, full usage is billed."""
+    arch = {
+        "services": [
+            {
+                "id": "q",
+                "type": "SQS",
+                "usage_quantity": 2000000,
+                "free_tier_mode": "ineligible",
+            }
+        ]
+    }
+    res = estimate_cost(arch)
+    # 2M billable @ $0.40/M = $0.80
+    assert res["breakdown"]["q"]["monthly_usd_low"] == 0.80
+
+
+def test_sqs_missing_or_invalid_usage_inputs():
+    """Invalid non-numeric usage marks service incomplete; negative usage clamps to 0."""
+    arch_invalid = {"services": [{"id": "q", "type": "SQS", "usage_quantity": "invalid_val"}]}
+    res_inv = estimate_cost(arch_invalid)
+    assert res_inv["status"] == "incomplete"
+    assert res_inv["breakdown"]["q"]["status"] == "incomplete"
+    assert res_inv["breakdown"]["q"]["monthly_usd_low"] is None
+
+    # Negative usage should clamp safely to 0
+    arch_neg = {"services": [{"id": "q", "type": "SQS", "usage_quantity": -5000}]}
+    res_neg = estimate_cost(arch_neg)
+    assert res_neg["status"] == "complete"
+    assert res_neg["breakdown"]["q"]["monthly_usd_low"] == 0.00
+
+
+def test_sqs_catalogue_default_assumptions_low_high():
+    """Default catalogue assumptions for SQS: 1M low ($0.00), 10M high ($3.60)."""
+    arch = {"services": [{"id": "q", "type": "SQS", "role": "queue"}]}
+    res = estimate_cost(arch)
+    assert res["status"] == "complete"
+    assert res["breakdown"]["q"]["monthly_usd_low"] == 0.00
+    assert res["breakdown"]["q"]["monthly_usd_high"] == 3.60
+    assert res["breakdown"]["q"]["potential_free_tier_savings_low"] == 0.40
+    assert res["breakdown"]["q"]["potential_free_tier_savings_high"] == 0.40
+    assert res["monthly_usd_low"] == 0.00
+    assert res["monthly_usd_high"] == 3.60

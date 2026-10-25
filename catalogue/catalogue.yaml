@@ -217,11 +217,15 @@ services:
       status: "verified"
       source_url: "https://aws.amazon.com/dynamodb/pricing/"
       components:
-        - name: "Standard Storage (beyond 25 GB free tier)"
+        - name: "Standard Storage"
           unit_price: 0.285
           unit: "USD per GB-month"
-          low_quantity: 0
-          high_quantity: 25
+          free_allowance:
+            quantity: 25.0
+            unit: "GB-month"
+            description: "First 25 GB per month free under AWS Always Free tier"
+          low_quantity: 10
+          high_quantity: 50
         - name: "Read Request Units (RRU)"
           unit_price: 0.0000001425
           unit: "USD per RRU"
@@ -290,9 +294,13 @@ services:
       region_scope: "ap-south-1"
       status: "verified"
       source_url: "https://aws.amazon.com/sqs/pricing/"
+      free_allowance:
+        quantity: 1.0
+        unit: "million requests"
+        description: "First 1,000,000 standard requests per month are free under AWS Always Free tier"
       usage_assumptions:
-        low_quantity: 1
-        high_quantity: 10
+        low_quantity: 1.0
+        high_quantity: 10.0
         unit: "million requests"
         description: "Standard queue: 1M requests (low) to 10M requests (high)"
 
@@ -307,11 +315,15 @@ services:
       status: "verified"
       source_url: "https://aws.amazon.com/cognito/pricing/"
       components:
-        - name: "User Pools MAU (beyond 50,000 free tier)"
+        - name: "User Pools MAU"
           unit_price: 0.0055
-          unit: "USD per billable MAU"
-          low_quantity: 0
-          high_quantity: 10000
+          unit: "USD per MAU"
+          free_allowance:
+            quantity: 50000.0
+            unit: "MAU"
+            description: "First 50,000 MAUs per month free under AWS Always Free tier"
+          low_quantity: 10000
+          high_quantity: 60000
       usage_assumptions:
         description: "User Pools: 10,000 MAUs (low, within 50k free tier) to 60,000 MAUs (high, 10k billable)"
 

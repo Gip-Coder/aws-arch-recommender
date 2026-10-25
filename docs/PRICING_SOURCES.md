@@ -18,9 +18,13 @@ This document records the pricing model, authoritative AWS sources, verification
    - **Partial Verified Subtotal (`status: incomplete`):** Some components are verified, but at least one component is unverified. Complete architecture low/high totals are returned as `null` (`None` in Python, serialized to JSON `null`), and verified component costs are reported separately as `partial_verified_monthly_usd_low` and `partial_verified_monthly_usd_high`.
    - **Incomplete Architecture Cost:** Any estimate where unverified services remain. The list of affected components is explicitly exposed in `incomplete_services`.
    - **Fully Unknown Architecture Cost:** All selected components are unverified. Both total low/high estimates are `null` and no partial totals are asserted.
-4. **Verified Zero-Cost vs. Free Tier:**
+4. **Verified Zero-Cost vs. Free Tier Allowances:**
    - Core IAM permissions, roles, and policies are officially offered by AWS at **no additional charge** ($0.00). This is distinguished from services that incur charges once free-tier thresholds are exceeded.
-5. **Usage Range Semantics:**
+5. **Reusable Free Allowance Accounting (`free_tier_mode`):**
+   - **`available` (default):** Assumes the AWS account qualifies for the applicable monthly free allowance and has not consumed it across other workloads. The allowance is subtracted prior to billing: $\text{billable} = \max(0, \text{usage} - \text{allowance})$.
+   - **`consumed` / `ineligible`:** Assumes the allowance has already been exhausted by other applications in the account or the workload does not qualify. Full on-demand unit rates apply to all usage.
+   - **`unknown`:** Conservatively calculates full on-demand charges while transparently reporting potential free-tier savings.
+6. **Usage Range Semantics:**
    - **Low Estimate:** Baseline production usage (minimum redundancy, baseline storage, light traffic).
    - **High Estimate:** Scaled production usage (multi-instance/multi-task scaling, higher storage retention, elevated request volume).
    - Standard monthly duration is modelled using 730 hours per month as an explicitly documented operational approximation.
@@ -193,12 +197,18 @@ This document records the pricing model, authoritative AWS sources, verification
 - **Verification Date:** 2026-10-25
 - **Region Scope:** Regional (`ap-south-1`)
 - **Billing Dimensions & Unit Rates:**
-  - Free Tier: First 1,000,000 requests free each month
+  - Free Allowance: First 1,000,000 requests free each month under AWS Always Free tier
   - Standard Queue: **$0.40 per million requests** ($0.0000004 per request)
-- **Usage Assumptions:**
-  - *Low:* 1,000,000 requests = 1 × $0.40 = **$0.40/mo** (standard on-demand baseline)
-  - *High:* 10,000,000 requests = 10 × $0.40 = **$4.00/mo**
-- **Important Conditions & Exclusions:** FIFO queue rate ($0.50/M) and payloads over 64 KB are excluded.
+- **Usage Assumptions & Calculations:**
+  - *Full Allowance Available (`free_tier_mode: available`):*
+    - Low (1,000,000 requests): $\max(0, 1.0 - 1.0) \times \$0.40 = \mathbf{\$0.00/\text{mo}}$ (potential free-tier savings: $0.40)
+    - 2,000,000 requests: $\max(0, 2.0 - 1.0) \times \$0.40 = 1.0 \times \$0.40 = \mathbf{\$0.40/\text{mo}}$
+    - High (10,000,000 requests): $\max(0, 10.0 - 1.0) \times \$0.40 = 9.0 \times \$0.40 = \mathbf{\$3.60/\text{mo}}$ (potential free-tier savings: $0.40)
+  - *Allowance Consumed / Ineligible (`free_tier_mode: consumed`):*
+    - 1,000,000 requests: $1.0 \times \$0.40 = \mathbf{\$0.40/\text{mo}}$
+    - 2,000,000 requests: $2.0 \times \$0.40 = \mathbf{\$0.80/\text{mo}}$
+    - 10,000,000 requests: $10.0 \times \$0.40 = \mathbf{\$4.00/\text{mo}}$
+- **Important Conditions & Exclusions:** FIFO queue rate ($0.50/M) and payloads over 64 KB (which are billed as multiple 64 KB billable requests) are excluded.
 
 ### 14. Amazon Cognito
 - **Catalogue Key:** `Cognito`
@@ -271,7 +281,7 @@ This document records the pricing model, authoritative AWS sources, verification
 | `DynamoDB` | database | `ap-south-1` | `verified` | $1.42 | $14.24 | On-Demand RRU ($0.1425/M) + WRU ($0.71/M) + Storage |
 | `ElastiCache` | database | `ap-south-1` | `verified` | $15.33 | $30.66 | `cache.t3.micro` Redis Node-Hours ($0.021/hr) |
 | `S3` | storage | `ap-south-1` | `verified` | $1.43 | $13.40 | Standard Storage ($0.025/GB) + Request Tiers |
-| `SQS` | integration | `ap-south-1` | `verified` | $0.40 | $4.00 | Standard Queue Requests ($0.40/M) |
+| `SQS` | integration | `ap-south-1` | `verified` | $0.00 | $3.60 | Standard Queue Requests ($0.40/M, 1M free allowance) |
 | `Cognito` | security | `ap-south-1` | `verified` | $0.00 | $55.00 | User Pools MAUs (first 50k free, then $0.0055/MAU) |
 | `Bedrock` | ai | `ap-south-1` | `verified` | $6.90 | $34.50 | Titan Text Express Tokens ($0.001/1k in, $0.0019/1k out) |
 | `CloudWatch` | ops | `ap-south-1` | `verified` | $5.20 | $24.00 | Log Ingestion ($0.67/GB) + Metrics ($0.30) + Alarms |
