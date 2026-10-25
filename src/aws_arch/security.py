@@ -1,8 +1,11 @@
 """Rule-based security / Well-Architected checks. Each rule returns a finding or None."""
-def _types(arch): return {s["type"] for s in arch["services"]}
+def _types(arch):
+    return {s.get("type") for s in (arch.get("services") or []) if isinstance(s, dict) and "type" in s}
 
 def check_security(arch: dict, req: dict | None = None) -> list[dict]:
-    t, ctrls = _types(arch), " ".join(arch.get("security_controls", [])).lower()
+    raw_ctrls = arch.get("security_controls") or []
+    ctrls = " ".join(str(c) for c in raw_ctrls).lower()
+    t = _types(arch)
     out = []
     def add(pillar, rule, ok, fix):
         out.append({"pillar": pillar, "rule": rule, "passed": ok, "recommendation": None if ok else fix})

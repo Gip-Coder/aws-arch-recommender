@@ -30,7 +30,14 @@
       }
     },
     "security_controls": {"type": "array", "items": {"type": "string"}},
-    "assumptions": {"type": "array", "items": {"type": "string"}}
+    "assumptions": {"type": "array", "items": {"type": "string"}},
+    "free_tier_mode": {
+      "type": "string",
+      "enum": ["available", "consumed", "ineligible", "unknown"]
+    },
+    "pricing_options": {
+      "type": "object"
+    }
   },
   "additionalProperties": false
 }
