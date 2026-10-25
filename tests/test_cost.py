@@ -363,6 +363,8 @@ RECORDED_EVIDENCE_REGISTRY = {
         "vcpu_rate": Decimal("0.04256"),
         "memory_sku": "N4Q5MGA6V9TFA2MG",
         "memory_rate": Decimal("0.004655"),
+        "ephemeral_storage_sku": "R3B3XUQQ8A2CS8S9",
+        "ephemeral_storage_rate": Decimal("0.000127"),
     },
     "Lambda": {
         "region_scope": "ap-south-1",
@@ -971,6 +973,12 @@ def test_fargate_rates_and_assumptions():
     assert res["monthly_usd_high"] == 75.73
     assert abs(res["breakdown"]["fgt"]["unrounded_monthly_usd_low"] - 18.93255) < 1e-9
     assert abs(res["breakdown"]["fgt"]["unrounded_monthly_usd_high"] - 75.7302) < 1e-9
+
+    # Ephemeral storage evidence verification:
+    # 20 GB included free per task; additional storage charges excluded from estimator baseline.
+    # Authoritative ap-south-1 Price List API SKU for additional ephemeral storage is R3B3XUQQ8A2CS8S9 ($0.000127/GB-hr).
+    assert RECORDED_EVIDENCE_REGISTRY["ECSFargate"]["ephemeral_storage_sku"] == "R3B3XUQQ8A2CS8S9"
+    assert RECORDED_EVIDENCE_REGISTRY["ECSFargate"]["ephemeral_storage_rate"] == Decimal("0.000127")
 
 
 def test_cloudfront_and_s3_sku_and_pricing_separation():
