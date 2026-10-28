@@ -1,0 +1,1 @@
+Build a serverless REST API for a startup mobile application. Traffic is spiky and unpredictable, minimizing costs during idle periods is crucial, and the application requires secure user authentication with fast key-value storage.

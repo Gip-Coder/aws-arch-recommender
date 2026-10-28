@@ -1,0 +1,14 @@
+{
+  "app_type": "serverless REST API",
+  "expected_users": 15000,
+  "traffic_pattern": "spiky",
+  "availability": "standard",
+  "storage": ["key-value"],
+  "performance": "low-latency",
+  "security_compliance": ["user authentication", "encryption in transit", "IAM least privilege"],
+  "budget_sensitivity": "minimise",
+  "assumptions": [
+    "Expected active user base estimated at 15,000 users",
+    "Serverless pay-per-request architecture chosen to minimize idle cost"
+  ]
+}

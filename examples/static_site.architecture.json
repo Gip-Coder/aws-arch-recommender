@@ -1,0 +1,28 @@
+{
+  "pattern": "static_site_cdn",
+  "services": [
+    {
+      "id": "edge",
+      "type": "CloudFront",
+      "role": "global CDN",
+      "rationale": "Caches static assets worldwide and enforces HTTPS."
+    },
+    {
+      "id": "bucket",
+      "type": "S3",
+      "role": "static asset storage",
+      "rationale": "Stores HTML, JS, CSS, and media files as durable objects."
+    }
+  ],
+  "connections": [
+    {"from": "edge", "to": "bucket", "label": "Origin Access Control (OAC)"}
+  ],
+  "security_controls": [
+    "No public S3 buckets via S3 Block Public Access",
+    "Enforced TLS 1.2+ on CloudFront",
+    "CloudFront Origin Access Control (OAC)"
+  ],
+  "assumptions": [
+    "No server-side dynamic compute needed"
+  ]
+}
