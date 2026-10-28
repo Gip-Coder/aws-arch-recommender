@@ -1,0 +1,1 @@
+Design a highly available and scalable e-commerce web application capable of serving approximately 100,000 monthly active users with steady traffic, relational order data, and moderate budget sensitivity.

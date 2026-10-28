@@ -1,0 +1,14 @@
+{
+  "app_type": "static content site",
+  "expected_users": 20000,
+  "traffic_pattern": "steady",
+  "availability": "standard",
+  "storage": ["object"],
+  "performance": "low-latency",
+  "security_compliance": ["HTTPS / TLS", "no public S3"],
+  "budget_sensitivity": "minimise",
+  "assumptions": [
+    "20,000 monthly page views",
+    "Static assets cached globally via CDN"
+  ]
+}

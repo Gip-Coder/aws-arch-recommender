@@ -1,0 +1,1 @@
+Host a static documentation and marketing website globally with minimal latency, SSL encryption, and high durability while ensuring zero public bucket exposure.

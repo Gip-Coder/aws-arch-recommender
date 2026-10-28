@@ -1,0 +1,42 @@
+{
+  "pattern": "serverless_rest_api",
+  "services": [
+    {
+      "id": "auth",
+      "type": "Cognito",
+      "role": "user authentication",
+      "rationale": "Manages user sign-up, sign-in, and JWT token issuance."
+    },
+    {
+      "id": "api",
+      "type": "APIGateway",
+      "role": "API management",
+      "rationale": "Exposes HTTP endpoints with request validation and authentication integration."
+    },
+    {
+      "id": "compute",
+      "type": "Lambda",
+      "role": "serverless business logic",
+      "rationale": "Executes request handlers on-demand with zero idle cost."
+    },
+    {
+      "id": "store",
+      "type": "DynamoDB",
+      "role": "NoSQL document storage",
+      "rationale": "Stores application entities with single-digit millisecond latency."
+    }
+  ],
+  "connections": [
+    {"from": "api", "to": "auth", "label": "Token authorizer"},
+    {"from": "api", "to": "compute", "label": "Proxy invocation"},
+    {"from": "compute", "to": "store", "label": "CRUD operations"}
+  ],
+  "security_controls": [
+    "Cognito user pool authorizer on API Gateway",
+    "Least-privilege IAM execution roles for Lambda",
+    "DynamoDB default encryption at rest"
+  ],
+  "assumptions": [
+    "Pay-per-request billing for both Lambda and DynamoDB on-demand"
+  ]
+}
