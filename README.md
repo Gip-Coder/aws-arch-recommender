@@ -21,6 +21,14 @@ python run.py --mock          # no AWS needed: runs the example e-commerce scena
 pytest                        # unit tests
 python run.py "Highly available e-commerce site for ~100k users"   # needs Bedrock access
 ```
+ b/diagram
+For live mode set a real Bedrock model id in `src/aws_arch/llm.py` and configure AWS credentials
+(`aws configure`) -- never commit credentials. Architecture diagrams are rendered using the Python `diagrams`
+library with official AWS node classes (`diagrams.aws.*`) grouped into clusters by service category.
+PNG diagrams require Graphviz (`dot`) on PATH; on Windows install via `winget install Graphviz.Graphviz` or
+`choco install graphviz` and ensure the bin folder (`C:\Program Files\Graphviz\bin` or `C:\Program Files (x86)\Graphviz\bin`)
+is added to PATH. If `dot` is missing, a fallback Graphviz `.dot` file is written with guidance to stderr.
+
 ### Live Mode with Amazon Bedrock
 1. **Request Model Access**: In the AWS Console, switch to your target region (e.g. `ap-south-1` Asia Pacific - Mumbai), navigate to **Amazon Bedrock -> Model access**, and enable access to your desired model (e.g. `Anthropic Claude 3 Haiku` or `Claude 3.5 Sonnet`).
 2. **Configure Local Credentials**: Configure your AWS credentials via `aws configure` (or IAM Identity Center `aws configure sso`). Never commit credentials or paste keys in files.
@@ -37,6 +45,7 @@ python run.py "Highly available e-commerce site for ~100k users"   # needs Bedro
    - `--model <id>`: Override the Bedrock model ID for a single run.
    - `--no-cache`: Bypass the disk cache in `.cache/` to force a fresh Bedrock call.
    - `--out <dir>`: Custom destination directory for report and diagram (default: `output/`).
+ main
 
 ## Layout
 | Path | Purpose |
