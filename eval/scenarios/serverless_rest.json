@@ -1,0 +1,7 @@
+{
+  "id": "serverless-rest",
+  "input_text": "Serverless mobile backend REST API with spiky traffic, low cost, Cognito user authentication, and DynamoDB storage.",
+  "expected_pattern": "serverless_rest_api",
+  "expected_services": ["APIGateway", "Lambda", "DynamoDB", "Cognito"],
+  "notes": "Serverless API reference pattern"
+}

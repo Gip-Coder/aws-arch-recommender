@@ -1,0 +1,23 @@
+{
+  "requirement": {
+    "app_type": "static content site",
+    "expected_users": 5000,
+    "traffic_pattern": "steady",
+    "availability": "standard",
+    "storage": ["object"],
+    "performance": "low-latency",
+    "security_compliance": ["HTTPS / TLS", "no public S3"],
+    "budget_sensitivity": "minimise"
+  },
+  "architecture": {
+    "pattern": "static_site_cdn",
+    "services": [
+      {"id": "edge", "type": "CloudFront", "role": "CDN", "rationale": "Global caching"},
+      {"id": "bucket", "type": "S3", "role": "storage", "rationale": "Static objects"}
+    ],
+    "connections": [
+      {"from": "edge", "to": "bucket"}
+    ],
+    "security_controls": ["no public s3", "encryption in transit"]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "requirement": {
+    "app_type": "e-commerce web application",
+    "expected_users": 100000,
+    "traffic_pattern": "steady",
+    "availability": "high",
+    "storage": ["relational"],
+    "performance": "standard",
+    "security_compliance": ["encryption", "authentication"],
+    "budget_sensitivity": "moderate"
+  },
+  "architecture": {
+    "pattern": "three_tier_web",
+    "services": [
+      {"id": "cdn", "type": "CloudFront", "role": "content delivery", "rationale": "Edge caching"},
+      {"id": "alb", "type": "ApplicationLoadBalancer", "role": "traffic distribution", "rationale": "Load balancing"},
+      {"id": "app", "type": "EC2AutoScalingGroup", "role": "application tier", "rationale": "Compute scaling"},
+      {"id": "db", "type": "RDS_MultiAZ", "role": "relational data store", "rationale": "High availability DB"}
+    ],
+    "connections": [
+      {"from": "cdn", "to": "alb"},
+      {"from": "alb", "to": "app"},
+      {"from": "app", "to": "db"}
+    ],
+    "security_controls": ["IAM least privilege", "encryption at rest", "encryption in transit"]
+  }
+}

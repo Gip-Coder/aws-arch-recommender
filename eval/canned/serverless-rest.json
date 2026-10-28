@@ -1,0 +1,27 @@
+{
+  "requirement": {
+    "app_type": "serverless REST API",
+    "expected_users": 10000,
+    "traffic_pattern": "spiky",
+    "availability": "standard",
+    "storage": ["key-value"],
+    "performance": "low-latency",
+    "security_compliance": ["user authentication", "encryption in transit"],
+    "budget_sensitivity": "minimise"
+  },
+  "architecture": {
+    "pattern": "serverless_rest_api",
+    "services": [
+      {"id": "auth", "type": "Cognito", "role": "user authentication", "rationale": "User pool"},
+      {"id": "api", "type": "APIGateway", "role": "API management", "rationale": "Endpoint proxy"},
+      {"id": "compute", "type": "Lambda", "role": "business logic", "rationale": "Serverless handler"},
+      {"id": "store", "type": "DynamoDB", "role": "storage", "rationale": "Key-value store"}
+    ],
+    "connections": [
+      {"from": "api", "to": "auth"},
+      {"from": "api", "to": "compute"},
+      {"from": "compute", "to": "store"}
+    ],
+    "security_controls": ["IAM least privilege", "encryption at rest"]
+  }
+}
