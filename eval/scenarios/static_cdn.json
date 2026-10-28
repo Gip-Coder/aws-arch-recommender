@@ -1,0 +1,7 @@
+{
+  "id": "static-cdn",
+  "input_text": "Global static documentation website with low latency, SSL encryption, and durable asset storage in S3.",
+  "expected_pattern": "static_site_cdn",
+  "expected_services": ["CloudFront", "S3"],
+  "notes": "Static CDN reference pattern"
+}

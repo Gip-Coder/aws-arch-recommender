@@ -1,0 +1,70 @@
+[
+  {
+    "input": "Highly available e-commerce platform for roughly 100,000 monthly active users. Traffic is mostly steady, needs relational data storage for orders, and budget sensitivity is moderate.",
+    "output": {
+      "app_type": "e-commerce web application",
+      "expected_users": 100000,
+      "traffic_pattern": "steady",
+      "availability": "high",
+      "storage": ["relational"],
+      "performance": "standard",
+      "security_compliance": ["encryption at rest", "encryption in transit", "IAM least privilege"],
+      "budget_sensitivity": "moderate",
+      "assumptions": [
+        "100,000 users interpreted as monthly active users",
+        "traffic roughly steady without extreme spikes"
+      ]
+    }
+  },
+  {
+    "input": "Serverless mobile backend REST API for a startup. Spiky traffic patterns, low cost is critical, needs user login and document / key-value storage.",
+    "output": {
+      "app_type": "serverless REST API",
+      "expected_users": 10000,
+      "traffic_pattern": "spiky",
+      "availability": "standard",
+      "storage": ["key-value"],
+      "performance": "low-latency",
+      "security_compliance": ["user authentication", "encryption in transit", "IAM least privilege"],
+      "budget_sensitivity": "minimise",
+      "assumptions": [
+        "Defaulted user count to 10,000 active users based on startup description",
+        "Assumed standard availability to optimize for minimal cost"
+      ]
+    }
+  },
+  {
+    "input": "Portfolio static marketing website with global reach and fast content delivery. No backend database required, very tight budget.",
+    "output": {
+      "app_type": "static content site",
+      "expected_users": 5000,
+      "traffic_pattern": "steady",
+      "availability": "standard",
+      "storage": ["object"],
+      "performance": "low-latency",
+      "security_compliance": ["HTTPS / TLS", "no public S3"],
+      "budget_sensitivity": "minimise",
+      "assumptions": [
+        "Defaulted expected users to 5,000 monthly visitors",
+        "Assumed object storage in S3 served through CloudFront CDN"
+      ]
+    }
+  },
+  {
+    "input": "Asynchronous batch data processing pipeline for nightly telemetry log uploads. Tolerates downtime, processed logs saved in data lake.",
+    "output": {
+      "app_type": "batch data pipeline",
+      "expected_users": 1000,
+      "traffic_pattern": "spiky",
+      "availability": "low",
+      "storage": ["object", "key-value"],
+      "performance": "relaxed",
+      "security_compliance": ["encryption at rest", "scoped IAM execution roles"],
+      "budget_sensitivity": "moderate",
+      "assumptions": [
+        "Nightly log ingestion treated as spiky queue-driven workload",
+        "Low availability target allows non-redundant cost-effective processing"
+      ]
+    }
+  }
+]

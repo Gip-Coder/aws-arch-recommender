@@ -1,0 +1,208 @@
+[
+  {
+    "requirements": {
+      "app_type": "e-commerce web application",
+      "expected_users": 100000,
+      "traffic_pattern": "steady",
+      "availability": "high",
+      "storage": ["relational"],
+      "performance": "standard",
+      "security_compliance": ["encryption at rest", "encryption in transit", "IAM least privilege"],
+      "budget_sensitivity": "moderate",
+      "assumptions": ["100k monthly active users"]
+    },
+    "architecture": {
+      "pattern": "three_tier_web",
+      "services": [
+        {
+          "id": "cdn",
+          "type": "CloudFront",
+          "role": "content delivery",
+          "rationale": "Provides low-latency global delivery and SSL/TLS termination."
+        },
+        {
+          "id": "alb",
+          "type": "ApplicationLoadBalancer",
+          "role": "traffic distribution",
+          "rationale": "Distributes incoming traffic across multi-AZ compute targets."
+        },
+        {
+          "id": "app",
+          "type": "EC2AutoScalingGroup",
+          "role": "application tier",
+          "rationale": "Runs application containers or instances with automated scaling."
+        },
+        {
+          "id": "db",
+          "type": "RDS_MultiAZ",
+          "role": "relational data store",
+          "rationale": "Provides highly available managed relational storage with automatic failover."
+        }
+      ],
+      "connections": [
+        {"from": "cdn", "to": "alb", "label": "HTTPS forwarding"},
+        {"from": "alb", "to": "app", "label": "HTTP routing"},
+        {"from": "app", "to": "db", "label": "SQL connections"}
+      ],
+      "security_controls": [
+        "IAM least privilege",
+        "encryption at rest",
+        "encryption in transit (TLS)"
+      ],
+      "assumptions": [
+        "Application tier instances placed in private subnets behind ALB"
+      ]
+    }
+  },
+  {
+    "requirements": {
+      "app_type": "serverless REST API",
+      "expected_users": 10000,
+      "traffic_pattern": "spiky",
+      "availability": "standard",
+      "storage": ["key-value"],
+      "performance": "low-latency",
+      "security_compliance": ["user authentication", "encryption in transit", "IAM least privilege"],
+      "budget_sensitivity": "minimise",
+      "assumptions": ["Startup workload"]
+    },
+    "architecture": {
+      "pattern": "serverless_rest_api",
+      "services": [
+        {
+          "id": "auth",
+          "type": "Cognito",
+          "role": "user authentication",
+          "rationale": "Manages user sign-up, sign-in, and JWT token issuance."
+        },
+        {
+          "id": "api",
+          "type": "APIGateway",
+          "role": "API management",
+          "rationale": "Exposes HTTP endpoints with request validation and authentication integration."
+        },
+        {
+          "id": "compute",
+          "type": "Lambda",
+          "role": "serverless business logic",
+          "rationale": "Executes request handlers on-demand with zero idle cost."
+        },
+        {
+          "id": "store",
+          "type": "DynamoDB",
+          "role": "NoSQL document storage",
+          "rationale": "Stores application entities with single-digit millisecond latency."
+        }
+      ],
+      "connections": [
+        {"from": "api", "to": "auth", "label": "Token authorizer"},
+        {"from": "api", "to": "compute", "label": "Proxy invocation"},
+        {"from": "compute", "to": "store", "label": "CRUD operations"}
+      ],
+      "security_controls": [
+        "Cognito user pool authorizer on API Gateway",
+        "Least-privilege IAM execution roles for Lambda",
+        "DynamoDB default encryption at rest"
+      ],
+      "assumptions": [
+        "Pay-per-request billing for both Lambda and DynamoDB on-demand"
+      ]
+    }
+  },
+  {
+    "requirements": {
+      "app_type": "static content site",
+      "expected_users": 5000,
+      "traffic_pattern": "steady",
+      "availability": "standard",
+      "storage": ["object"],
+      "performance": "low-latency",
+      "security_compliance": ["HTTPS / TLS", "no public S3"],
+      "budget_sensitivity": "minimise",
+      "assumptions": ["Static assets only"]
+    },
+    "architecture": {
+      "pattern": "static_site_cdn",
+      "services": [
+        {
+          "id": "edge",
+          "type": "CloudFront",
+          "role": "global CDN",
+          "rationale": "Caches static assets worldwide and enforces HTTPS."
+        },
+        {
+          "id": "bucket",
+          "type": "S3",
+          "role": "static asset storage",
+          "rationale": "Stores HTML, JS, CSS, and media files as durable objects."
+        }
+      ],
+      "connections": [
+        {"from": "edge", "to": "bucket", "label": "Origin Access Control (OAC)"}
+      ],
+      "security_controls": [
+        "No public S3 buckets via S3 Block Public Access",
+        "Enforced TLS 1.2+ on CloudFront",
+        "CloudFront Origin Access Control (OAC)"
+      ],
+      "assumptions": [
+        "No server-side dynamic compute needed"
+      ]
+    }
+  },
+  {
+    "requirements": {
+      "app_type": "batch data pipeline",
+      "expected_users": 1000,
+      "traffic_pattern": "spiky",
+      "availability": "low",
+      "storage": ["object", "key-value"],
+      "performance": "relaxed",
+      "security_compliance": ["encryption at rest", "scoped IAM execution roles"],
+      "budget_sensitivity": "moderate",
+      "assumptions": ["Asynchronous log processing"]
+    },
+    "architecture": {
+      "pattern": "batch_pipeline",
+      "services": [
+        {
+          "id": "raw_bucket",
+          "type": "S3",
+          "role": "raw data landing zone",
+          "rationale": "Ingests incoming telemetry files securely at scale."
+        },
+        {
+          "id": "queue",
+          "type": "SQS",
+          "role": "message buffering",
+          "rationale": "Buffers processing events and decouples file ingestion from processing."
+        },
+        {
+          "id": "processor",
+          "type": "Lambda",
+          "role": "batch processing worker",
+          "rationale": "Processes batches of queue events asynchronously."
+        },
+        {
+          "id": "output_db",
+          "type": "DynamoDB",
+          "role": "metadata and status store",
+          "rationale": "Records processed log summaries and processing status."
+        }
+      ],
+      "connections": [
+        {"from": "queue", "to": "processor", "label": "Event source mapping"},
+        {"from": "processor", "to": "raw_bucket", "label": "Read raw logs"},
+        {"from": "processor", "to": "output_db", "label": "Status writes"}
+      ],
+      "security_controls": [
+        "SSE-S3 encryption on input bucket",
+        "Least-privilege IAM execution roles for Lambda worker",
+        "SQS queue encryption with KMS or SQS-managed keys"
+      ],
+      "assumptions": [
+        "Processing time per batch stays under 15-minute Lambda execution limit"
+      ]
+    }
+  }
+]

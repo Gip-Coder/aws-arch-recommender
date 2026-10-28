@@ -1,0 +1,7 @@
+{
+  "id": "ecommerce-3tier",
+  "input_text": "Highly available e-commerce platform for ~100k users with relational order storage and steady traffic.",
+  "expected_pattern": "three_tier_web",
+  "expected_services": ["CloudFront", "ApplicationLoadBalancer", "EC2AutoScalingGroup", "RDS_MultiAZ"],
+  "notes": "Standard 3-tier web reference pattern"
+}
