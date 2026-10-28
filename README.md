@@ -47,6 +47,52 @@ is added to PATH. If `dot` is missing, a fallback Graphviz `.dot` file is writte
    - `--out <dir>`: Custom destination directory for report and diagram (default: `output/`).
  main
 
+## Web UI (Streamlit)
+
+A Streamlit web dashboard is available for interactive architecture exploration, visual topology inspection, and Well-Architected reviews.
+
+### 1. Installation & Launch (Windows PowerShell)
+
+Activate the virtual environment and install dependencies:
+```powershell
+# Activate virtual environment
+.\.venv\Scripts\Activate.ps1
+
+# Install dependencies (includes Streamlit)
+pip install -r requirements.txt
+
+# Launch the Streamlit web dashboard
+streamlit run app/streamlit_app.py
+```
+The application will open automatically in your browser at `http://localhost:8501`.
+
+### 2. Using Demo Mode (Offline)
+- **Demo mode is enabled by default** via the sidebar checkbox.
+- In Demo mode, the application runs 100% offline using verified scenarios in the `examples/` directory. No AWS account, credentials, or internet connection are required.
+- **Selecting Scenarios:** Use the sidebar dropdown ("Select Cached Scenario") to switch between available reference architectures. The input requirements and resulting service topology, diagrams, cost projections, and security findings will update automatically.
+- Clicking **Generate** in Demo mode re-runs the deterministic downstream pipeline locally for the selected scenario.
+
+### 3. Switching to Live Mode
+- To analyze arbitrary natural-language requirements dynamically, uncheck **Demo mode** in the sidebar.
+- Enter your application requirements in the text box and click **Generate**.
+- **Prerequisites for Live Mode:**
+  1. Configure AWS credentials with permissions for Amazon Bedrock in `ap-south-1`:
+     ```powershell
+     aws configure
+     ```
+  2. Configure a valid Foundation Model ID in `src/aws_arch/llm.py` (e.g. `anthropic.claude-3-sonnet-20240229-v1:0` or similar Bedrock model).
+
+### 4. Common Troubleshooting
+- **Graphviz Diagram Rendering:** If Graphviz (`dot`) is installed and on the system `PATH`, high-resolution PNG diagrams are generated. If `dot` is not installed, the UI automatically falls back to rendering the topology directly in your browser using Graphviz DOT and provides the raw DOT source code.
+- **Port Conflicts:** If port 8501 is busy, specify an alternate port:
+  ```powershell
+  streamlit run app/streamlit_app.py --server.port 8502
+  ```
+- **PowerShell Execution Policy:** If running `Activate.ps1` produces a script execution restriction, run:
+  ```powershell
+  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+  ```
+
 ## Layout
 | Path | Purpose |
 |---|---|
